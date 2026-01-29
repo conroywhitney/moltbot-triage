@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moltbot Triage Dashboard</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --bg2: #1a1a2e;
+    --bg3: #16213e;
+    --border: #2a2a4a;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --accent: #818cf8;
+    --link: #93c5fd;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width:1200px; margin:0 auto; padding:20px; }
+  h1 {
+    font-size:2rem; font-weight:800; margin-bottom:0.5rem;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { color:var(--text2); font-size:0.95rem; margin-bottom:2rem; }
+  h2 {
+    font-size:1.4rem; font-weight:700; margin:2.5rem 0 1rem;
+    padding-bottom:0.5rem; border-bottom:2px solid var(--border);
+  }
+  a { color:var(--link); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+
+  /* Badges */
+  .badge {
+    display:inline-block; padding:2px 10px; border-radius:12px;
+    font-size:0.75rem; font-weight:600; color:#fff;
+    vertical-align:middle; white-space:nowrap;
+  }
+  .ci-dot {
+    display:inline-block; width:10px; height:10px; border-radius:50%;
+    vertical-align:middle;
+  }
+
+  /* Action cards */
+  .action-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+  .action-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:20px; transition:border-color 0.2s;
+    border-left:4px solid #10b981;
+  }
+  .action-card:hover { border-color:var(--accent); }
+  .action-card-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .action-card-header a { font-size:1.1rem; font-weight:700; }
+  .action-card-title { font-size:0.95rem; color:var(--text); margin-bottom:10px; }
+  .action-card-meta { display:flex; gap:16px; font-size:0.8rem; color:var(--text2); flex-wrap:wrap; }
+
+  /* Priority cards */
+  .priority-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px; }
+  .priority-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+    padding:16px; transition:border-color 0.2s;
+  }
+  .priority-card:hover { border-color:var(--accent); }
+  .priority-card-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .priority-card-header a { font-size:1rem; font-weight:700; }
+  .priority-card-title { font-size:0.9rem; color:var(--text); margin-bottom:8px; }
+  .voter-count { font-size:0.8rem; color:var(--text2); margin-left:auto; }
+  .voter-details { margin-top:8px; }
+  .voter-details summary {
+    cursor:pointer; font-size:0.8rem; color:var(--text2);
+    padding:4px 0;
+  }
+  .voter-details summary:hover { color:var(--link); }
+  .voter-entry {
+    padding:8px 12px; margin-top:6px;
+    background:var(--bg); border-radius:6px; font-size:0.85rem;
+  }
+  .voter-reason { color:var(--text2); margin-top:4px; font-size:0.8rem; }
+
+  /* Trending */
+  .trending-list { display:flex; flex-direction:column; gap:6px; }
+  .trending-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 14px; background:var(--bg2); border-radius:8px;
+    border:1px solid var(--border); transition:border-color 0.2s;
+  }
+  .trending-item:hover { border-color:var(--accent); }
+  .trending-engagement { display:flex; gap:6px; flex-shrink:0; }
+  .engagement-pill {
+    font-size:0.75rem; padding:2px 8px; border-radius:10px;
+    background:var(--bg3); color:var(--text2); white-space:nowrap;
+  }
+  .trending-title { font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* Table */
+  .table-controls {
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
+    align-items:center;
+  }
+  .filter-group { display:flex; gap:4px; flex-wrap:wrap; }
+  .filter-btn {
+    padding:4px 12px; border-radius:16px; border:1px solid var(--border);
+    background:var(--bg2); color:var(--text2); cursor:pointer;
+    font-size:0.8rem; transition:all 0.2s;
+  }
+  .filter-btn:hover { border-color:var(--accent); color:var(--text); }
+  .filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .search-box {
+    padding:6px 14px; border-radius:16px; border:1px solid var(--border);
+    background:var(--bg2); color:var(--text); font-size:0.85rem;
+    outline:none; width:200px;
+  }
+  .search-box:focus { border-color:var(--accent); }
+
+  table {
+    width:100%; border-collapse:collapse; font-size:0.85rem;
+  }
+  thead { position:sticky; top:0; }
+  th {
+    background:var(--bg3); padding:10px 12px; text-align:left;
+    border-bottom:2px solid var(--border); cursor:pointer;
+    user-select:none; white-space:nowrap;
+  }
+  th:hover { color:var(--accent); }
+  th .sort-arrow { font-size:0.7rem; margin-left:4px; }
+  td {
+    padding:8px 12px; border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  .title-cell { max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  tr:hover td { background:var(--bg3); }
+  tr.hidden { display:none; }
+
+  /* Health stats */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:14px; margin-bottom:24px;
+  }
+  .stat-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+    padding:16px; text-align:center;
+  }
+  .stat-value { font-size:1.8rem; font-weight:800; color:var(--accent); }
+  .stat-label { font-size:0.8rem; color:var(--text2); margin-top:4px; }
+
+  .health-section { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:768px) { .health-section { grid-template-columns:1fr; } }
+
+  .bar-chart { display:flex; flex-direction:column; gap:8px; }
+  .bar-row { display:flex; align-items:center; gap:8px; }
+  .bar-label { width:80px; font-size:0.8rem; color:var(--text2); text-align:right; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-track { flex:1; height:20px; background:var(--bg); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; transition:width 0.3s; min-width:2px; }
+  .bar-value { width:30px; font-size:0.8rem; color:var(--text2); }
+
+  .huge-pr {
+    display:flex; align-items:center; gap:8px; padding:8px 0;
+    border-bottom:1px solid var(--border); font-size:0.85rem;
+    flex-wrap:wrap;
+  }
+  .huge-pr-title { color:var(--text2); }
+  .huge-pr-author { color:var(--text2); font-size:0.8rem; margin-left:auto; }
+
+  .empty-state {
+    padding:24px; text-align:center; color:var(--text2);
+    background:var(--bg2); border-radius:10px; border:1px dashed var(--border);
+  }
+
+  footer {
+    margin-top:3rem; padding:1.5rem 0; border-top:1px solid var(--border);
+    text-align:center; font-size:0.8rem; color:var(--text2);
+  }
+
+  @media (max-width:600px) {
+    .container { padding:12px; }
+    h1 { font-size:1.4rem; }
+    .action-grid, .priority-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .bar-label { width:60px; font-size:0.7rem; }
+    .table-controls { flex-direction:column; }
+    .search-box { width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔮 Moltbot Triage Dashboard</h1>
+  <p class="subtitle">moltbot/moltbot &middot; 576 issues &middot; 486 PRs &middot; Generated 2026-01-29 16:50 UTC</p>
+
+  <!-- 🎯 REVIEW THESE FIRST -->
+  <h2>🎯 Action: Review These First</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">PRs that fix community-voted issues — the highest signal in this repo.</p>
+  <div class="action-grid">
+    
+        <div class="action-card">
+          <div class="action-card-header">
+            <a href="https://github.com/moltbot/moltbot/pull/3705" target="_blank">#3705</a> <span class="badge" style="background:#f97316">large</span> <span class="ci-dot" style="background:#f59e0b" title="pending"></span>
+          </div>
+          <div class="action-card-title">feat(gateway): inject timestamps into agent + chat.send messages (#3658)</div>
+          <div class="action-card-meta">
+            <span>🔧 Fixes: <a href="https://github.com/moltbot/moltbot/issues/3658" target="_blank">#3658</a></span>
+            <span>👤 @conroywhitney</span>
+            <span>⏱️ 0d</span>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-card-header">
+            <a href="https://github.com/moltbot/moltbot/pull/3838" target="_blank">#3838</a> <span class="badge" style="background:#6b7280">tiny</span> <span class="ci-dot" style="background:#f59e0b" title="pending"></span>
+          </div>
+          <div class="action-card-title">fix(agents): pass contextFiles to createAgentSession for openai-completions API</div>
+          <div class="action-card-meta">
+            <span>🔧 Fixes: <a href="https://github.com/moltbot/moltbot/issues/3775" target="_blank">#3775</a></span>
+            <span>👤 @ai-fanatic</span>
+            <span>⏱️ 0d</span>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-card-header">
+            <a href="https://github.com/moltbot/moltbot/pull/3878" target="_blank">#3878</a> <span class="badge" style="background:#10b981">small</span> <span class="ci-dot" style="background:#f59e0b" title="pending"></span>
+          </div>
+          <div class="action-card-title">fix(logging): use local timezone for console timestamps</div>
+          <div class="action-card-meta">
+            <span>🔧 Fixes: <a href="https://github.com/moltbot/moltbot/issues/3867" target="_blank">#3867</a></span>
+            <span>👤 @HirokiKobayashi-R</span>
+            <span>⏱️ 0d</span>
+          </div>
+        </div>
+  </div>
+
+  <!-- 🗳️ COMMUNITY PRIORITIES -->
+  <h2>🗳️ Community Priorities</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">Issues ranked by vote score. Click to expand voter reasoning.</p>
+  <div class="priority-grid">
+    
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/3658" target="_blank">#3658</a> <span class="badge" style="background:#ef4444">critical</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">Feature: Gateway should inject timestamps for TUI/web messages</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#ef4444">critical</span>
+              <div class="voter-reason">Agents need to know when they are. We built PR #3705 for this. Without timestamps, agents hallucinate dates, miss deadlines, can&#39;t reason about scheduling. Foundational capability.</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/2341" target="_blank">#2341</a> <span class="badge" style="background:#f97316">high</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">[Security] Support running gateway as isolated system user instead of personal user</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f97316">high</span>
+              <div class="voter-reason">Running gateway as personal user means it has access to everything you have. Isolated system user is basic security hygiene for something with exec access. Important for trust.</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/3775" target="_blank">#3775</a> <span class="badge" style="background:#f97316">high</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">[Bug]: Bootstrap files (SOUL.md, USER.md) not injected into system prompt for openai-completions API</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f97316">high</span>
+              <div class="voter-reason">SOUL.md and USER.md not injected for OpenAI completions API means agents on that provider have no identity or user context. That&#39;s not a minor bug — it&#39;s an identity crisis. Core to the Moltbot promise that agents have personality and context.</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/2364" target="_blank">#2364</a> <span class="badge" style="background:#f97316">high</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">session-memory hook hardcodes Anthropic provider instead of using configured model</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f97316">high</span>
+              <div class="voter-reason">session-memory hardcoding Anthropic means anyone on other providers (OpenAI, local models) gets broken memory. Memory is core to agent continuity — this bug blocks a huge chunk of users.</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/2910" target="_blank">#2910</a> <span class="badge" style="background:#f59e0b">medium</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">[Feature]: Knowledge-Graph-based memory: OpenMemory/Cognee/ZEP</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f59e0b">medium</span>
+              <div class="voter-reason">Knowledge graph memory (OpenMemory/Cognee/ZEP) — same space as #2542. Interesting direction but these are large external dependencies. Fix the basics first (hardcoded provider #2364, search reranking #3170).</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/2542" target="_blank">#2542</a> <span class="badge" style="background:#f59e0b">medium</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">Idea: Graph-Based Memory System for Improved Retrieval</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f59e0b">medium</span>
+              <div class="voter-reason">Graph-based memory is interesting but big scope. Flat-file memory (MEMORY.md + daily files) works well for us currently. Would watch but not prioritize over fixing existing memory bugs.</div>
+            </div>
+          </details>
+        </div>
+        <div class="priority-card">
+          <div class="priority-card-header">
+            <a href="https://github.com/moltbot/moltbot/issues/3867" target="_blank">#3867</a> <span class="badge" style="background:#f59e0b">medium</span>
+            <span class="voter-count">🗳️ 1 vote</span>
+          </div>
+          <div class="priority-card-title">[Feature] Support local timezone for console/file log timestamps</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            
+            <div class="voter-entry">
+              <strong>clawd-conroy</strong> <span class="badge" style="background:#f59e0b">medium</span>
+              <div class="voter-reason">Log timestamps in local TZ is nice-to-have for debugging. Not as fundamental as agent-facing timestamps (#3658) but related to the same &quot;time awareness&quot; theme.</div>
+            </div>
+          </details>
+        </div>
+  </div>
+
+  <!-- 🔥 TRENDING -->
+  <h2>🔥 Trending (No Votes Yet)</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">High-engagement issues without votes — consider voting on these.</p>
+  <div class="trending-list">
+    
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 25</span>
+            <span class="engagement-pill">💬 11</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Please add Feishu and WeChat support">
+            <a href="https://github.com/moltbot/moltbot/issues/2170" target="_blank">#2170</a> [Feature]: Please add Feishu and WeChat support
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 17</span>
+            <span class="engagement-pill">💬 5</span>
+          </div>
+          <div class="trending-title" title="Remove the whatsapp dialogue">
+            <a href="https://github.com/moltbot/moltbot/issues/2676" target="_blank">#2676</a> Remove the whatsapp dialogue
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 14</span>
+            <span class="engagement-pill">💬 12</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Azure OpenAI as model provider">
+            <a href="https://github.com/moltbot/moltbot/issues/2280" target="_blank">#2280</a> [Feature]: Azure OpenAI as model provider
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 16</span>
+            <span class="engagement-pill">💬 7</span>
+          </div>
+          <div class="trending-title" title="Linux/Windows Clawdbot Apps">
+            <a href="https://github.com/moltbot/moltbot/issues/75" target="_blank">#75</a> Linux/Windows Clawdbot Apps
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 12</span>
+            <span class="engagement-pill">💬 3</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Copilot-sdk instead of proxy">
+            <a href="https://github.com/moltbot/moltbot/issues/1579" target="_blank">#1579</a> [Feature]: Copilot-sdk instead of proxy
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 9</span>
+            <span class="engagement-pill">💬 10</span>
+          </div>
+          <div class="trending-title" title="[Bug]:  zsh: command not found: moltbot">
+            <a href="https://github.com/moltbot/moltbot/issues/3038" target="_blank">#3038</a> [Bug]:  zsh: command not found: moltbot
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 8</span>
+            <span class="engagement-pill">💬 6</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Add QQ Channel Support for China Mainland Users">
+            <a href="https://github.com/moltbot/moltbot/issues/3684" target="_blank">#3684</a> [Feature]: Add QQ Channel Support for China Mainland Users
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 7</span>
+            <span class="engagement-pill">💬 8</span>
+          </div>
+          <div class="trending-title" title="[Bug]: Onboarding wizard does not install Systemd service on Ubuntu 22.04">
+            <a href="https://github.com/moltbot/moltbot/issues/1818" target="_blank">#1818</a> [Bug]: Onboarding wizard does not install Systemd service on Ubuntu 22…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 9</span>
+            <span class="engagement-pill">💬 2</span>
+          </div>
+          <div class="trending-title" title="[Bug]: HTTP_PROXY is ignored">
+            <a href="https://github.com/moltbot/moltbot/issues/2102" target="_blank">#2102</a> [Bug]: HTTP_PROXY is ignored
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 3</span>
+            <span class="engagement-pill">💬 16</span>
+          </div>
+          <div class="trending-title" title="Clawd not working with LMStudio">
+            <a href="https://github.com/moltbot/moltbot/issues/1695" target="_blank">#1695</a> Clawd not working with LMStudio
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 9</span>
+            <span class="engagement-pill">💬 1</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Support fully non-interactive Docker deployment (headless/Dokploy)">
+            <a href="https://github.com/moltbot/moltbot/issues/1950" target="_blank">#1950</a> [Feature]: Support fully non-interactive Docker deployment (headless/D…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 9</span>
+            <span class="engagement-pill">💬 0</span>
+          </div>
+          <div class="trending-title" title="[Feature] Support multiple Discord accounts (multi-token) for multi-agent routing">
+            <a href="https://github.com/moltbot/moltbot/issues/3306" target="_blank">#3306</a> [Feature] Support multiple Discord accounts (multi-token) for multi-ag…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 8</span>
+            <span class="engagement-pill">💬 2</span>
+          </div>
+          <div class="trending-title" title="[Security]: npm moltbot@latest still points to squatter&#39;s package - README instructs unsafe install">
+            <a href="https://github.com/moltbot/moltbot/issues/3275" target="_blank">#3275</a> [Security]: npm moltbot@latest still points to squatter&#39;s package - RE…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 6</span>
+            <span class="engagement-pill">💬 5</span>
+          </div>
+          <div class="trending-title" title="[Bug]: Claude Code CLI OAuth auth fails - mode/type mismatch between config files">
+            <a href="https://github.com/moltbot/moltbot/issues/2697" target="_blank">#2697</a> [Bug]: Claude Code CLI OAuth auth fails - mode/type mismatch between c…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 8</span>
+            <span class="engagement-pill">💬 0</span>
+          </div>
+          <div class="trending-title" title="[Bug]:Telegram natural-language reminders consistently fail and corrupt session (sessionKey=unknown) on v2026.1.24-3">
+            <a href="https://github.com/moltbot/moltbot/issues/3343" target="_blank">#3343</a> [Bug]:Telegram natural-language reminders consistently fail and corrup…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 6</span>
+            <span class="engagement-pill">💬 3</span>
+          </div>
+          <div class="trending-title" title="Bug: Claude Code CLI setup silently fails and creates OpenAI Codex credentials instead">
+            <a href="https://github.com/moltbot/moltbot/issues/1240" target="_blank">#1240</a> Bug: Claude Code CLI setup silently fails and creates OpenAI Codex cre…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 6</span>
+            <span class="engagement-pill">💬 3</span>
+          </div>
+          <div class="trending-title" title="web_search: Add SearXNG as fallback provider">
+            <a href="https://github.com/moltbot/moltbot/issues/2317" target="_blank">#2317</a> web_search: Add SearXNG as fallback provider
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 7</span>
+            <span class="engagement-pill">💬 0</span>
+          </div>
+          <div class="trending-title" title="Feature Request: Custom baseUrl for model providers (OpenAI-compatible proxies)">
+            <a href="https://github.com/moltbot/moltbot/issues/2305" target="_blank">#2305</a> Feature Request: Custom baseUrl for model providers (OpenAI-compatible…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 5</span>
+            <span class="engagement-pill">💬 4</span>
+          </div>
+          <div class="trending-title" title="[Feature]: x402 payment protocol extension">
+            <a href="https://github.com/moltbot/moltbot/issues/3465" target="_blank">#3465</a> [Feature]: x402 payment protocol extension
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 4</span>
+            <span class="engagement-pill">💬 6</span>
+          </div>
+          <div class="trending-title" title="[Feature]: improve Docker setup">
+            <a href="https://github.com/moltbot/moltbot/issues/2178" target="_blank">#2178</a> [Feature]: improve Docker setup
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 5</span>
+            <span class="engagement-pill">💬 2</span>
+          </div>
+          <div class="trending-title" title="[Bug]: Cron jobs with wake=now don&#39;t deliver to Telegram">
+            <a href="https://github.com/moltbot/moltbot/issues/2937" target="_blank">#2937</a> [Bug]: Cron jobs with wake=now don&#39;t deliver to Telegram
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 5</span>
+            <span class="engagement-pill">💬 1</span>
+          </div>
+          <div class="trending-title" title="[Bug]: OpenRouter integration incomplete">
+            <a href="https://github.com/moltbot/moltbot/issues/2963" target="_blank">#2963</a> [Bug]: OpenRouter integration incomplete
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 3</span>
+            <span class="engagement-pill">💬 5</span>
+          </div>
+          <div class="trending-title" title="Internationalization (i18n) &amp; Localization Support">
+            <a href="https://github.com/moltbot/moltbot/issues/3460" target="_blank">#3460</a> Internationalization (i18n) &amp; Localization Support
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 2</span>
+            <span class="engagement-pill">💬 7</span>
+          </div>
+          <div class="trending-title" title="TUI shows no output for chat.send runs (chat events not emitted)">
+            <a href="https://github.com/moltbot/moltbot/issues/2493" target="_blank">#2493</a> TUI shows no output for chat.send runs (chat events not emitted)
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 0</span>
+            <span class="engagement-pill">💬 12</span>
+          </div>
+          <div class="trending-title" title="[Bug]: Docker install =&gt; EACCES: permission denied, mkdir &#39;/home/node&#39;">
+            <a href="https://github.com/moltbot/moltbot/issues/3480" target="_blank">#3480</a> [Bug]: Docker install =&gt; EACCES: permission denied, mkdir &#39;/home/node&#39;
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 1</span>
+            <span class="engagement-pill">💬 9</span>
+          </div>
+          <div class="trending-title" title="Ollama models return &#39;(no output)&#39; — enforceFinalTag incorrectly applied to all Ollama models">
+            <a href="https://github.com/moltbot/moltbot/issues/2279" target="_blank">#2279</a> Ollama models return &#39;(no output)&#39; — enforceFinalTag incorrectly appli…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 3</span>
+            <span class="engagement-pill">💬 4</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Add and configure vLLM and Ollama as first-class model providers">
+            <a href="https://github.com/moltbot/moltbot/issues/2838" target="_blank">#2838</a> [Feature]: Add and configure vLLM and Ollama as first-class model prov…
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 4</span>
+            <span class="engagement-pill">💬 1</span>
+          </div>
+          <div class="trending-title" title="[Feature]: Telegram WebApp (Mini Apps) button support">
+            <a href="https://github.com/moltbot/moltbot/issues/1592" target="_blank">#1592</a> [Feature]: Telegram WebApp (Mini Apps) button support
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 4</span>
+            <span class="engagement-pill">💬 1</span>
+          </div>
+          <div class="trending-title" title="Feature Request: Rate limit usage notifications">
+            <a href="https://github.com/moltbot/moltbot/issues/1703" target="_blank">#1703</a> Feature Request: Rate limit usage notifications
+          </div>
+        </div>
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 2</span>
+            <span class="engagement-pill">💬 6</span>
+          </div>
+          <div class="trending-title" title="[Bug]: Gemini CLI Login does not work">
+            <a href="https://github.com/moltbot/moltbot/issues/2233" target="_blank">#2233</a> [Bug]: Gemini CLI Login does not work
+          </div>
+        </div>
+  </div>
+
+  <!-- 📋 ALL PRs -->
+  <h2>📋 All PRs</h2>
+  <div class="table-controls">
+    <input type="text" class="search-box" id="pr-search" placeholder="🔍 Search titles..." oninput="filterTable()">
+    <div class="filter-group" id="size-filters">
+      <button class="filter-btn active" data-filter="size" data-value="all" onclick="toggleFilter(this,'size')">All Sizes</button>
+      <button class="filter-btn" data-filter="size" data-value="tiny" onclick="toggleFilter(this,'size')">tiny</button>
+      <button class="filter-btn" data-filter="size" data-value="small" onclick="toggleFilter(this,'size')">small</button>
+      <button class="filter-btn" data-filter="size" data-value="medium" onclick="toggleFilter(this,'size')">medium</button>
+      <button class="filter-btn" data-filter="size" data-value="large" onclick="toggleFilter(this,'size')">large</button>
+      <button class="filter-btn" data-filter="size" data-value="huge" onclick="toggleFilter(this,'size')">huge</button>
+    </div>
+    <div class="filter-group" id="ci-filters">
+      <button class="filter-btn active" data-filter="ci" data-value="all" onclick="toggleFilter(this,'ci')">All CI</button>
+      <button class="filter-btn" data-filter="ci" data-value="passing" onclick="toggleFilter(this,'ci')">✅ passing</button>
+      <button class="filter-btn" data-filter="ci" data-value="failing" onclick="toggleFilter(this,'ci')">❌ failing</button>
+      <button class="filter-btn" data-filter="ci" data-value="pending" onclick="toggleFilter(this,'ci')">⏳ pending</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;">
+  <table id="pr-table">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0,'num')"># <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(1,'str')">Title <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(2,'num')">Size <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(3,'str')">CI <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(4,'str')">Review <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(5,'str')">Draft <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(6,'num')">Age <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(7,'str')">Author <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3705" target="_blank">#3705</a></td>
+          <td class="title-cell" title="feat(gateway): inject timestamps into agent + chat.send messages (#3658)">feat(gateway): inject timestamps into agent + chat.send mess…</td>
+          <td data-sort="287"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@conroywhitney</td>
+        </tr>
+        <tr data-size="tiny" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3838" target="_blank">#3838</a></td>
+          <td class="title-cell" title="fix(agents): pass contextFiles to createAgentSession for openai-completions API">fix(agents): pass contextFiles to createAgentSession for ope…</td>
+          <td data-sort="4"><span class="badge" style="background:#6b7280">tiny</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@ai-fanatic</td>
+        </tr>
+        <tr data-size="small" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3878" target="_blank">#3878</a></td>
+          <td class="title-cell" title="fix(logging): use local timezone for console timestamps">fix(logging): use local timezone for console timestamps</td>
+          <td data-sort="20"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@HirokiKobayashi-R</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1886" target="_blank">#1886</a></td>
+          <td class="title-cell" title="feat: Add nano-gpt.com as a provider">feat: Add nano-gpt.com as a provider</td>
+          <td data-sort="857"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@0xGingi</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2419" target="_blank">#2419</a></td>
+          <td class="title-cell" title="feat: add Maple AI provider integration">feat: add Maple AI provider integration</td>
+          <td data-sort="631"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@marksftw</td>
+        </tr>
+        <tr data-size="medium" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3335" target="_blank">#3335</a></td>
+          <td class="title-cell" title="Fixes cron jobs">Fixes cron jobs</td>
+          <td data-sort="169"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@hkirat</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3489" target="_blank">#3489</a></td>
+          <td class="title-cell" title="Model Providers: Add Chutes AI Integration">Model Providers: Add Chutes AI Integration</td>
+          <td data-sort="449"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@Veightor</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2617" target="_blank">#2617</a></td>
+          <td class="title-cell" title="Fix Docker build failure caused by .dockerignore (#2593)">Fix Docker build failure caused by .dockerignore (#2593)</td>
+          <td data-sort="16"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@HA2345567</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2157" target="_blank">#2157</a></td>
+          <td class="title-cell" title="feat(lark): add Feishu/Lark channel plugin">feat(lark): add Feishu/Lark channel plugin</td>
+          <td data-sort="878"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@learningpro</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2812" target="_blank">#2812</a></td>
+          <td class="title-cell" title="feat(providers): add ANTHROPIC_BASE_URL environment variable support">feat(providers): add ANTHROPIC_BASE_URL environment variable…</td>
+          <td data-sort="26"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@gmcouto</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2715" target="_blank">#2715</a></td>
+          <td class="title-cell" title="added Nebius Token Factory as a model provider">added Nebius Token Factory as a model provider</td>
+          <td data-sort="318"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@shivaylamba</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3747" target="_blank">#3747</a></td>
+          <td class="title-cell" title="feat(web-fetch): add Jina Reader as extraction fallback">feat(web-fetch): add Jina Reader as extraction fallback</td>
+          <td data-sort="456"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@nathanschram</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1872" target="_blank">#1872</a></td>
+          <td class="title-cell" title="feat(bedrock): add support for CRIS inference profiles">feat(bedrock): add support for CRIS inference profiles</td>
+          <td data-sort="282"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@mekza</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2155" target="_blank">#2155</a></td>
+          <td class="title-cell" title="feat: add modelverse provider">feat: add modelverse provider</td>
+          <td data-sort="552"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@mfzzf</td>
+        </tr>
+        <tr data-size="huge" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3160" target="_blank">#3160</a></td>
+          <td class="title-cell" title="feat (memory): Implement new (opt-in) QMD memory backend">feat (memory): Implement new (opt-in) QMD memory backend</td>
+          <td data-sort="2068"><span class="badge" style="background:#ef4444">huge</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@vignesh07</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1946" target="_blank">#1946</a></td>
+          <td class="title-cell" title="feat(tools): add computer tool for GUI automation">feat(tools): add computer tool for GUI automation</td>
+          <td data-sort="776"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@f-trycua</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="Yes">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3704" target="_blank">#3704</a></td>
+          <td class="title-cell" title="Feature[https://github.com/moltbot/moltbot/issues/3694] Public WebChat route /public/chat (UI shell)">Feature[https://github.com/moltbot/moltbot/issues/3694] Publ…</td>
+          <td data-sort="217"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>Yes</td>
+          <td data-sort="0">0d</td>
+          <td>@NickNYU</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3848" target="_blank">#3848</a></td>
+          <td class="title-cell" title="feat(qq): add QQ OneBot v11 extension support / 添加 QQ OneBot v11 支持">feat(qq): add QQ OneBot v11 extension support / 添加 QQ OneBot…</td>
+          <td data-sort="409"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@constansino</td>
+        </tr>
+        <tr data-size="medium" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3895" target="_blank">#3895</a></td>
+          <td class="title-cell" title="perf: mathematical optimization of vision pipeline via deterministic scaling">perf: mathematical optimization of vision pipeline via deter…</td>
+          <td data-sort="77"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@adarshsen592-create</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2683" target="_blank">#2683</a></td>
+          <td class="title-cell" title="feat(providers): add LiteLLM provider support">feat(providers): add LiteLLM provider support</td>
+          <td data-sort="906"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@hiboute</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3155" target="_blank">#3155</a></td>
+          <td class="title-cell" title="feat(models): Add Kimi K2.5 support for the kimi coding plan">feat(models): Add Kimi K2.5 support for the kimi coding plan</td>
+          <td data-sort="43"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@Inovvia</td>
+        </tr>
+        <tr data-size="medium" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3212" target="_blank">#3212</a></td>
+          <td class="title-cell" title="feat(slack): support multiple media files in a single message">feat(slack): support multiple media files in a single messag…</td>
+          <td data-sort="103"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@mebruno12</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3322" target="_blank">#3322</a></td>
+          <td class="title-cell" title="fix: merge provider config api into registry model">fix: merge provider config api into registry model</td>
+          <td data-sort="40"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@nulone</td>
+        </tr>
+        <tr data-size="small" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3368" target="_blank">#3368</a></td>
+          <td class="title-cell" title="fix: sessions navigation, DM thread display, and DM thread delivery regression">fix: sessions navigation, DM thread display, and DM thread d…</td>
+          <td data-sort="45"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@Lukavyi</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3561" target="_blank">#3561</a></td>
+          <td class="title-cell" title="fix: fail fast when both state dirs exist">fix: fail fast when both state dirs exist</td>
+          <td data-sort="247"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@adityarao3</td>
+        </tr>
+        <tr data-size="medium" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3672" target="_blank">#3672</a></td>
+          <td class="title-cell" title="feat: Introduce multi-account support for Discord, ensuring session keys and RPC IDs are account-aware.">feat: Introduce multi-account support for Discord, ensuring …</td>
+          <td data-sort="194"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@KuzeyC</td>
+        </tr>
+        <tr data-size="huge" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1586" target="_blank">#1586</a></td>
+          <td class="title-cell" title="feat: add Telegram User (MTProto) channel plugin">feat: add Telegram User (MTProto) channel plugin</td>
+          <td data-sort="3463"><span class="badge" style="background:#ef4444">huge</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="5">5d</td>
+          <td>@mukhtharcm</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2789" target="_blank">#2789</a></td>
+          <td class="title-cell" title="feat(channels): add Feishu/Lark channel integration">feat(channels): add Feishu/Lark channel integration</td>
+          <td data-sort="901"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@tomatoxman</td>
+        </tr>
+        <tr data-size="medium" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3856" target="_blank">#3856</a></td>
+          <td class="title-cell" title="feat (macOS): add remote gateway token field (AI-assisted)">feat (macOS): add remote gateway token field (AI-assisted)</td>
+          <td data-sort="52"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@innoiso</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2960" target="_blank">#2960</a></td>
+          <td class="title-cell" title="feat: hierarchical memory structure (YYYY/MM/) with automatic migration">feat: hierarchical memory structure (YYYY/MM/) with automati…</td>
+          <td data-sort="922"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@e-Nicko</td>
+        </tr>
+        <tr data-size="small" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3587" target="_blank">#3587</a></td>
+          <td class="title-cell" title="fix(message): disable cross-context marker by default (#1782) ">fix(message): disable cross-context marker by default (#1782…</td>
+          <td data-sort="29"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@nadesh00</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3650" target="_blank">#3650</a></td>
+          <td class="title-cell" title="feat(compaction): add post-compaction recovery turn [AI-assisted]feat(compaction): add post-compaction recovery turn [AI-assisted]">feat(compaction): add post-compaction recovery turn [AI-assi…</td>
+          <td data-sort="458"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="0">0d</td>
+          <td>@sebasalmeidam</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1855" target="_blank">#1855</a></td>
+          <td class="title-cell" title="feat(providers): add Poe API provider plugin">feat(providers): add Poe API provider plugin</td>
+          <td data-sort="547"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="4">4d</td>
+          <td>@garethpaul</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2603" target="_blank">#2603</a></td>
+          <td class="title-cell" title="Fix: Enable unlimited WhatsApp Web auto-reconnect by default">Fix: Enable unlimited WhatsApp Web auto-reconnect by default</td>
+          <td data-sort="46"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@Blindripper</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2906" target="_blank">#2906</a></td>
+          <td class="title-cell" title="fix: normalize Moonshot thinking signatures on message receipt">fix: normalize Moonshot thinking signatures on message recei…</td>
+          <td data-sort="25"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@Veanir</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1962" target="_blank">#1962</a></td>
+          <td class="title-cell" title="fix: release session locks on process termination [AI-assisted]">fix: release session locks on process termination [AI-assist…</td>
+          <td data-sort="26"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@zats</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2071" target="_blank">#2071</a></td>
+          <td class="title-cell" title="fix: accept JSON string for cron.add job parameter (#1940)">fix: accept JSON string for cron.add job parameter (#1940)</td>
+          <td data-sort="46"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@andrescardonas7</td>
+        </tr>
+        <tr data-size="tiny" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2300" target="_blank">#2300</a></td>
+          <td class="title-cell" title="[AI-assisted] fix(mattermost): ensure replies create threads in channels">[AI-assisted] fix(mattermost): ensure replies create threads…</td>
+          <td data-sort="2"><span class="badge" style="background:#6b7280">tiny</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@blizzy78</td>
+        </tr>
+        <tr data-size="medium" data-ci="passing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2961" target="_blank">#2961</a></td>
+          <td class="title-cell" title="fix(memory): support symlinks in memory file discovery">fix(memory): support symlinks in memory file discovery</td>
+          <td data-sort="89"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="passing"><span class="ci-dot" style="background:#10b981" title="passing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@kira-ariaki</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/3109" target="_blank">#3109</a></td>
+          <td class="title-cell" title="fix(compaction): resolve model via runtime when ctx.model is undefined">fix(compaction): resolve model via runtime when ctx.model is…</td>
+          <td data-sort="11"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="1">1d</td>
+          <td>@bonald</td>
+        </tr>
+        <tr data-size="huge" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1822" target="_blank">#1822</a></td>
+          <td class="title-cell" title="Fix: Enable scrolling on the dashboard config page">Fix: Enable scrolling on the dashboard config page</td>
+          <td data-sort="13398"><span class="badge" style="background:#ef4444">huge</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="4">4d</td>
+          <td>@dxd5001</td>
+        </tr>
+        <tr data-size="large" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1943" target="_blank">#1943</a></td>
+          <td class="title-cell" title="Add jan.ai provider documentation">Add jan.ai provider documentation</td>
+          <td data-sort="313"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@csa1234</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/1984" target="_blank">#1984</a></td>
+          <td class="title-cell" title="fix: identityLinks shares context across channels for per-channel-peer">fix: identityLinks shares context across channels for per-ch…</td>
+          <td data-sort="31"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@ivancasco</td>
+        </tr>
+        <tr data-size="small" data-ci="passing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2042" target="_blank">#2042</a></td>
+          <td class="title-cell" title="WhatsApp: preserve document filenames">WhatsApp: preserve document filenames</td>
+          <td data-sort="15"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="passing"><span class="ci-dot" style="background:#10b981" title="passing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@fancyboi999</td>
+        </tr>
+        <tr data-size="small" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2057" target="_blank">#2057</a></td>
+          <td class="title-cell" title="[AI] UI: align navigation icon tests">[AI] UI: align navigation icon tests</td>
+          <td data-sort="24"><span class="badge" style="background:#10b981">small</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@fancyboi999</td>
+        </tr>
+        <tr data-size="medium" data-ci="passing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2072" target="_blank">#2072</a></td>
+          <td class="title-cell" title="feat(slack): add channel-info and mark-read actions for unread tracking">feat(slack): add channel-info and mark-read actions for unre…</td>
+          <td data-sort="100"><span class="badge" style="background:#f59e0b">medium</span></td>
+          <td data-sort="passing"><span class="ci-dot" style="background:#10b981" title="passing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@claude-chapter</td>
+        </tr>
+        <tr data-size="huge" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2085" target="_blank">#2085</a></td>
+          <td class="title-cell" title="feat(gateway): add human-in-the-loop approval for outbound messaging">feat(gateway): add human-in-the-loop approval for outbound m…</td>
+          <td data-sort="1749"><span class="badge" style="background:#ef4444">huge</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@Glucksberg</td>
+        </tr>
+        <tr data-size="tiny" data-ci="passing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2092" target="_blank">#2092</a></td>
+          <td class="title-cell" title="fix(nextcloud-talk): sign message text instead of JSON body">fix(nextcloud-talk): sign message text instead of JSON body</td>
+          <td data-sort="9"><span class="badge" style="background:#6b7280">tiny</span></td>
+          <td data-sort="passing"><span class="ci-dot" style="background:#10b981" title="passing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@wangai-studio</td>
+        </tr>
+        <tr data-size="large" data-ci="pending" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2225" target="_blank">#2225</a></td>
+          <td class="title-cell" title="Android: fix device identity/pairing + A2UI action bridge">Android: fix device identity/pairing + A2UI action bridge</td>
+          <td data-sort="604"><span class="badge" style="background:#f97316">large</span></td>
+          <td data-sort="pending"><span class="ci-dot" style="background:#f59e0b" title="pending"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="3">3d</td>
+          <td>@DeanoC</td>
+        </tr>
+        <tr data-size="tiny" data-ci="failing" data-review="none" data-draft="No">
+          <td><a href="https://github.com/moltbot/moltbot/pull/2353" target="_blank">#2353</a></td>
+          <td class="title-cell" title="fix: ensure api field is set for inline provider models">fix: ensure api field is set for inline provider models</td>
+          <td data-sort="8"><span class="badge" style="background:#6b7280">tiny</span></td>
+          <td data-sort="failing"><span class="ci-dot" style="background:#ef4444" title="failing"></span></td>
+          <td>none</td>
+          <td>No</td>
+          <td data-sort="2">2d</td>
+          <td>@sbknana</td>
+        </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 📊 REPOSITORY HEALTH -->
+  <h2>📊 Repository Health</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">576</div>
+      <div class="stat-label">Open Issues</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">486</div>
+      <div class="stat-label">Open PRs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">88%</div>
+      <div class="stat-label">Zero Reviews</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">60%</div>
+      <div class="stat-label">CI Failing</div>
+    </div>
+  </div>
+
+  <div class="health-section">
+    <div>
+      <h3 style="margin-bottom:12px;font-size:1rem;">PR Size Distribution</h3>
+      <div class="bar-chart">
+        
+        <div class="bar-row">
+          <span class="bar-label">tiny</span>
+          <div class="bar-track"><div class="bar-fill" style="width:51.824817518248175%;background:#6b7280"></div></div>
+          <span class="bar-value">71</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">small</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#10b981"></div></div>
+          <span class="bar-value">137</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">medium</span>
+          <div class="bar-track"><div class="bar-fill" style="width:94.16058394160584%;background:#f59e0b"></div></div>
+          <span class="bar-value">129</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">large</span>
+          <div class="bar-track"><div class="bar-fill" style="width:97.81021897810218%;background:#f97316"></div></div>
+          <span class="bar-value">134</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">huge</span>
+          <div class="bar-track"><div class="bar-fill" style="width:10.94890510948905%;background:#ef4444"></div></div>
+          <span class="bar-value">15</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px;font-size:1rem;">Top Contributors</h3>
+      <div class="bar-chart">
+        
+        <div class="bar-row">
+          <span class="bar-label">@hclsys</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#8b5cf6"></div></div>
+          <span class="bar-value">9</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@Glucksberg</span>
+          <div class="bar-track"><div class="bar-fill" style="width:77.77777777777777%;background:#8b5cf6"></div></div>
+          <span class="bar-value">7</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@HirokiKobayashi-R</span>
+          <div class="bar-track"><div class="bar-fill" style="width:77.77777777777777%;background:#8b5cf6"></div></div>
+          <span class="bar-value">7</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@ronit111</span>
+          <div class="bar-track"><div class="bar-fill" style="width:66.66666666666667%;background:#8b5cf6"></div></div>
+          <span class="bar-value">6</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@zerone0x</span>
+          <div class="bar-track"><div class="bar-fill" style="width:55.55555555555556%;background:#8b5cf6"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@Episkey-G</span>
+          <div class="bar-track"><div class="bar-fill" style="width:55.55555555555556%;background:#8b5cf6"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@Lukavyi</span>
+          <div class="bar-track"><div class="bar-fill" style="width:55.55555555555556%;background:#8b5cf6"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@ThanhNguyxn</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@spanishflu-est1918</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@impozzible</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@Suksham-sharma</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@elliotsecops</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@robbyczgw-cla</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@ai-fanatic</span>
+          <div class="bar-track"><div class="bar-fill" style="width:44.44444444444444%;background:#8b5cf6"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">@fancyboi999</span>
+          <div class="bar-track"><div class="bar-fill" style="width:33.333333333333336%;background:#8b5cf6"></div></div>
+          <span class="bar-value">3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px;margin-bottom:12px;font-size:1rem;">🐘 Huge PRs (&gt;1000 lines)</h3>
+  <div>
+    
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/4062" target="_blank">#4062</a> <span class="badge" style="background:#ef4444">13718 lines</span>
+          <span class="huge-pr-title">feat(discord): add reactionTrigger config for invo</span>
+          <span class="huge-pr-author">@David-Marsh-Photo</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/1822" target="_blank">#1822</a> <span class="badge" style="background:#ef4444">13398 lines</span>
+          <span class="huge-pr-title">Fix: Enable scrolling on the dashboard config page</span>
+          <span class="huge-pr-author">@dxd5001</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/2216" target="_blank">#2216</a> <span class="badge" style="background:#ef4444">6847 lines</span>
+          <span class="huge-pr-title">UI: Redesign with Tangerine theme and multi-theme </span>
+          <span class="huge-pr-author">@justelson</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/4029" target="_blank">#4029</a> <span class="badge" style="background:#ef4444">4974 lines</span>
+          <span class="huge-pr-title">checkout</span>
+          <span class="huge-pr-author">@RemyLoveLogicAI</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/1586" target="_blank">#1586</a> <span class="badge" style="background:#ef4444">3463 lines</span>
+          <span class="huge-pr-title">feat: add Telegram User (MTProto) channel plugin</span>
+          <span class="huge-pr-author">@mukhtharcm</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/1856" target="_blank">#1856</a> <span class="badge" style="background:#ef4444">3136 lines</span>
+          <span class="huge-pr-title">fix: untrack dist/control-ui build artifacts</span>
+          <span class="huge-pr-author">@zerone0x</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/1944" target="_blank">#1944</a> <span class="badge" style="background:#ef4444">3136 lines</span>
+          <span class="huge-pr-title">Stop tracking generated ⁠ `dist/control-ui ⁠` arti</span>
+          <span class="huge-pr-author">@peschee</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/3971" target="_blank">#3971</a> <span class="badge" style="background:#ef4444">2686 lines</span>
+          <span class="huge-pr-title">[AI-Assisted] feat(config): add OpenRouter provide</span>
+          <span class="huge-pr-author">@mahoek</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/3160" target="_blank">#3160</a> <span class="badge" style="background:#ef4444">2068 lines</span>
+          <span class="huge-pr-title">feat (memory): Implement new (opt-in) QMD memory b</span>
+          <span class="huge-pr-author">@vignesh07</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/2085" target="_blank">#2085</a> <span class="badge" style="background:#ef4444">1749 lines</span>
+          <span class="huge-pr-title">feat(gateway): add human-in-the-loop approval for </span>
+          <span class="huge-pr-author">@Glucksberg</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/2894" target="_blank">#2894</a> <span class="badge" style="background:#ef4444">1645 lines</span>
+          <span class="huge-pr-title">iOS: implement dual-connection gateway architectur</span>
+          <span class="huge-pr-author">@chrisherold</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/4066" target="_blank">#4066</a> <span class="badge" style="background:#ef4444">1460 lines</span>
+          <span class="huge-pr-title">[WIP][FEATURE] Add Google Cloud (Compute Engine) d</span>
+          <span class="huge-pr-author">@velrino</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/1985" target="_blank">#1985</a> <span class="badge" style="background:#ef4444">1255 lines</span>
+          <span class="huge-pr-title">feat: Add Perplexity Search API as web_search prov</span>
+          <span class="huge-pr-author">@kesku</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/2524" target="_blank">#2524</a> <span class="badge" style="background:#ef4444">1028 lines</span>
+          <span class="huge-pr-title">feat: Add OAuth option to Google Chat</span>
+          <span class="huge-pr-author">@iHildy</span>
+        </div>
+        <div class="huge-pr">
+          <a href="https://github.com/moltbot/moltbot/pull/4058" target="_blank">#4058</a> <span class="badge" style="background:#ef4444">1024 lines</span>
+          <span class="huge-pr-title">Security: harden web tools and file parsing</span>
+          <span class="huge-pr-author">@VACInc</span>
+        </div>
+  </div>
+
+  <footer>
+    Generated 2026-01-29 16:50 UTC by <a href="https://github.com/moltbot/moltbot" target="_blank">moltbot-triage</a> &middot;
+    Data from 576 issues and 486 pull requests
+  </footer>
+</div>
+
+<script>
+// ── Sort ────────────────────────────────────────────────────────────
+let sortCol = -1, sortAsc = true;
+function sortTable(col, type) {
+  const table = document.getElementById('pr-table');
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.rows);
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+
+  rows.sort((a, b) => {
+    let va = a.cells[col].getAttribute('data-sort') || a.cells[col].textContent.trim();
+    let vb = b.cells[col].getAttribute('data-sort') || b.cells[col].textContent.trim();
+    if (type === 'num') {
+      va = parseFloat(va.replace(/[^0-9.-]/g,'')) || 0;
+      vb = parseFloat(vb.replace(/[^0-9.-]/g,'')) || 0;
+      return sortAsc ? va - vb : vb - va;
+    }
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  rows.forEach(r => tbody.appendChild(r));
+
+  // Update arrows
+  table.querySelectorAll('.sort-arrow').forEach(s => s.textContent = '');
+  table.rows[0].cells[col].querySelector('.sort-arrow').textContent = sortAsc ? '▲' : '▼';
+}
+
+// ── Filters ─────────────────────────────────────────────────────────
+let activeFilters = { size: 'all', ci: 'all' };
+function toggleFilter(btn, group) {
+  const val = btn.getAttribute('data-value');
+  activeFilters[group] = val;
+  document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTable();
+}
+
+function filterTable() {
+  const search = document.getElementById('pr-search').value.toLowerCase();
+  const rows = document.querySelectorAll('#pr-table tbody tr');
+  rows.forEach(row => {
+    const size = row.getAttribute('data-size');
+    const ci = row.getAttribute('data-ci');
+    const title = row.cells[1].textContent.toLowerCase();
+    let show = true;
+    if (activeFilters.size !== 'all' && size !== activeFilters.size) show = false;
+    if (activeFilters.ci !== 'all' && ci !== activeFilters.ci) show = false;
+    if (search && !title.includes(search)) show = false;
+    row.classList.toggle('hidden', !show);
+  });
+}
+</script>
+</body>
+</html>

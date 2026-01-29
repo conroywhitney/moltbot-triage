@@ -527,6 +527,639 @@ def generate_stats(issues, prs, votes_map):
     log(f"  Wrote stats.md")
 
 
+def _html_escape(s):
+    """Escape HTML special characters."""
+    if not s:
+        return ""
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#39;")
+
+
+def generate_html_dashboard(issues, prs, votes_map):
+    """Generate aggregated/index.html — a self-contained HTML dashboard."""
+    log("Generating index.html...")
+
+    owner = CONFIG.get("sync", {}).get("owner", "moltbot")
+    repo = CONFIG.get("sync", {}).get("repo", "moltbot")
+    github_base = f"https://github.com/{owner}/{repo}"
+
+    # ── Compute scored issues ────────────────────────────────────────
+    scored_issues = []
+    for issue in issues:
+        num = issue["number"]
+        vs = vote_score(num, votes_map)
+        reactions = issue.get("reactions_total", 0) or 0
+        comments = issue.get("comments_count", 0) or 0
+        composite = (vs * WEIGHTS.get("vote", 100)
+                     + reactions * WEIGHTS.get("reactions", 5)
+                     + comments * WEIGHTS.get("comments", 2))
+        scored_issues.append((composite, vs, issue))
+    scored_issues.sort(key=lambda x: x[0], reverse=True)
+
+    voted_issues = [(c, s, i) for c, s, i in scored_issues if s > 0]
+    trending_issues = [(c, s, i) for c, s, i in scored_issues
+                       if s == 0 and ((i.get("reactions_total", 0) or 0) + (i.get("comments_count", 0) or 0)) > 0]
+
+    # ── Compute scored PRs ───────────────────────────────────────────
+    scored_prs = []
+    for pr in prs:
+        num = pr["number"]
+        fixes = pr.get("fixes_issues", []) or []
+        fix_score = sum(vote_score(f, votes_map) for f in fixes)
+        vs = vote_score(num, votes_map)
+        reactions = pr.get("reactions_total", 0) or 0
+        comments = pr.get("comments_count", 0) or 0
+        composite = (fix_score * WEIGHTS.get("fixes_voted", 200)
+                     + vs * WEIGHTS.get("vote", 100)
+                     + reactions * WEIGHTS.get("reactions", 5)
+                     + comments * WEIGHTS.get("comments", 2))
+        scored_prs.append((composite, fix_score, vs, pr))
+    scored_prs.sort(key=lambda x: x[0], reverse=True)
+
+    fixing_prs = [(c, fs, vs, p) for c, fs, vs, p in scored_prs if fs > 0]
+
+    # ── Stats ────────────────────────────────────────────────────────
+    total_issues = len(issues)
+    total_prs = len(prs)
+    draft_count = sum(1 for p in prs if p.get("draft"))
+    no_review = [p for p in prs if not (p.get("reviews") or []) and not p.get("draft")]
+    zero_review_pct = 100 * len(no_review) / max(total_prs, 1)
+    ci_fail = [p for p in prs if p.get("ci_status") == "failing"]
+    ci_fail_pct = 100 * len(ci_fail) / max(total_prs, 1)
+
+    size_counts = Counter(p.get("size", "unknown") for p in prs)
+    author_counts = Counter(p.get("author", "ghost") for p in prs)
+    top_authors = author_counts.most_common(REPORT_LIMITS.get("top_contributors", 20))
+    max_author_count = top_authors[0][1] if top_authors else 1
+
+    huge_threshold = PR_SIZES.get("large", 1000)
+    huge_prs = sorted(
+        [p for p in prs if (p.get("additions", 0) or 0) + (p.get("deletions", 0) or 0) >= huge_threshold],
+        key=lambda p: (p.get("additions", 0) or 0) + (p.get("deletions", 0) or 0),
+        reverse=True,
+    )
+
+    # ── Helper: badges ───────────────────────────────────────────────
+    def size_badge(size):
+        colors = {"tiny": "#6b7280", "small": "#10b981", "medium": "#f59e0b", "large": "#f97316", "huge": "#ef4444"}
+        c = colors.get(size, "#6b7280")
+        return f'<span class="badge" style="background:{c}">{_html_escape(size)}</span>'
+
+    def ci_dot(status):
+        colors = {"passing": "#10b981", "failing": "#ef4444", "pending": "#f59e0b"}
+        c = colors.get(status, "#6b7280")
+        label = _html_escape(status or "unknown")
+        return f'<span class="ci-dot" style="background:{c}" title="{label}"></span>'
+
+    def priority_badge(label):
+        colors = {"critical": "#ef4444", "high": "#f97316", "medium": "#f59e0b", "low": "#3b82f6"}
+        c = colors.get(str(label).lower(), "#6b7280")
+        return f'<span class="badge" style="background:{c}">{_html_escape(label)}</span>'
+
+    def pr_link(pr):
+        num = pr["number"]
+        url = pr.get("url", f"{github_base}/pull/{num}")
+        return f'<a href="{_html_escape(url)}" target="_blank">#{num}</a>'
+
+    def issue_link(issue):
+        num = issue["number"]
+        url = issue.get("url", f"{github_base}/issues/{num}")
+        return f'<a href="{_html_escape(url)}" target="_blank">#{num}</a>'
+
+    def issue_link_num(num):
+        return f'<a href="{github_base}/issues/{num}" target="_blank">#{num}</a>'
+
+    def age_str(dt_str):
+        d = days_ago(parse_date(dt_str))
+        if d >= 9999:
+            return "?"
+        return f"{d}d"
+
+    # ── Section: Review These First ──────────────────────────────────
+    review_cards = ""
+    for _, fs, vs, pr in fixing_prs:
+        num = pr["number"]
+        fixes = pr.get("fixes_issues", []) or []
+        fix_links = ", ".join(issue_link_num(f) for f in fixes)
+        title = _html_escape(pr.get("title", ""))
+        author = _html_escape(pr.get("author", "?"))
+        age = age_str(pr.get("created"))
+        review_cards += f"""
+        <div class="action-card">
+          <div class="action-card-header">
+            {pr_link(pr)} {size_badge(pr.get('size','?'))} {ci_dot(pr.get('ci_status',''))}
+          </div>
+          <div class="action-card-title">{title}</div>
+          <div class="action-card-meta">
+            <span>🔧 Fixes: {fix_links}</span>
+            <span>👤 @{author}</span>
+            <span>⏱️ {age}</span>
+          </div>
+        </div>"""
+
+    if not fixing_prs:
+        review_cards = '<div class="empty-state">No PRs currently fix voted issues. Vote on issues to surface signal!</div>'
+
+    # ── Section: Community Priorities ────────────────────────────────
+    priority_cards = ""
+    for composite, vs, issue in voted_issues:
+        num = issue["number"]
+        title = _html_escape(issue.get("title", ""))
+        voters = votes_map.get(num, [])
+        voter_count = len(voters)
+        # Determine highest priority label among voters
+        best_label = "medium"
+        best_score = 0
+        for v in voters:
+            if v["priority"] > best_score:
+                best_score = v["priority"]
+                best_label = v.get("priority_label", "medium")
+
+        voter_html = ""
+        for v in voters:
+            reason = _html_escape(v.get("reason", "No reason given"))
+            agent = _html_escape(v.get("agent", "?"))
+            plabel = v.get("priority_label", "medium")
+            voter_html += f"""
+            <div class="voter-entry">
+              <strong>{agent}</strong> {priority_badge(plabel)}
+              <div class="voter-reason">{reason}</div>
+            </div>"""
+
+        collapse_id = f"voters-{num}"
+        priority_cards += f"""
+        <div class="priority-card">
+          <div class="priority-card-header">
+            {issue_link(issue)} {priority_badge(best_label)}
+            <span class="voter-count">🗳️ {voter_count} vote{"s" if voter_count != 1 else ""}</span>
+          </div>
+          <div class="priority-card-title">{title}</div>
+          <details class="voter-details">
+            <summary>Show voter reasoning</summary>
+            {voter_html}
+          </details>
+        </div>"""
+
+    if not voted_issues:
+        priority_cards = '<div class="empty-state">No votes yet. Be the first to vote!</div>'
+
+    # ── Section: Trending ────────────────────────────────────────────
+    trending_html = ""
+    limit = REPORT_LIMITS.get("top_engagement", 30)
+    for i, (composite, vs, issue) in enumerate(trending_issues[:limit]):
+        num = issue["number"]
+        title = _html_escape(issue.get("title", ""))
+        title_short = _html_escape(issue.get("title", "")[:70])
+        reactions = issue.get("reactions_total", 0) or 0
+        comments = issue.get("comments_count", 0) or 0
+        engagement = reactions + comments
+        trending_html += f"""
+        <div class="trending-item">
+          <div class="trending-engagement">
+            <span class="engagement-pill">👍 {reactions}</span>
+            <span class="engagement-pill">💬 {comments}</span>
+          </div>
+          <div class="trending-title" title="{title}">
+            {issue_link(issue)} {title_short}{"…" if len(issue.get("title","")) > 70 else ""}
+          </div>
+        </div>"""
+
+    if not trending_issues:
+        trending_html = '<div class="empty-state">No trending issues found.</div>'
+
+    # ── Section: All PRs table ───────────────────────────────────────
+    all_pr_rows = ""
+    for composite, fs, vs, pr in scored_prs[:REPORT_LIMITS.get("top_prs", 50)]:
+        num = pr["number"]
+        title = _html_escape(pr.get("title", ""))
+        size = pr.get("size", "unknown")
+        ci = pr.get("ci_status", "unknown")
+        review = pr.get("review_decision", "none") or "none"
+        draft = "Yes" if pr.get("draft") else "No"
+        age = days_ago(parse_date(pr.get("created")))
+        author = _html_escape(pr.get("author", "?"))
+        additions = pr.get("additions", 0) or 0
+        deletions = pr.get("deletions", 0) or 0
+        total_lines = additions + deletions
+        all_pr_rows += f"""
+        <tr data-size="{_html_escape(size)}" data-ci="{_html_escape(ci)}" data-review="{_html_escape(review)}" data-draft="{_html_escape(draft)}">
+          <td>{pr_link(pr)}</td>
+          <td class="title-cell" title="{title}">{title[:60]}{"…" if len(pr.get("title",""))>60 else ""}</td>
+          <td data-sort="{total_lines}">{size_badge(size)}</td>
+          <td data-sort="{ci}">{ci_dot(ci)}</td>
+          <td>{_html_escape(review)}</td>
+          <td>{draft}</td>
+          <td data-sort="{age}">{age}d</td>
+          <td>@{author}</td>
+        </tr>"""
+
+    # ── Section: Health / Stats ──────────────────────────────────────
+    size_order = ["tiny", "small", "medium", "large", "huge"]
+    size_bar_max = max(size_counts.values()) if size_counts else 1
+    size_bars_html = ""
+    for s in size_order:
+        cnt = size_counts.get(s, 0)
+        pct = 100 * cnt / max(size_bar_max, 1)
+        colors = {"tiny": "#6b7280", "small": "#10b981", "medium": "#f59e0b", "large": "#f97316", "huge": "#ef4444"}
+        c = colors.get(s, "#6b7280")
+        size_bars_html += f"""
+        <div class="bar-row">
+          <span class="bar-label">{s}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:{pct}%;background:{c}"></div></div>
+          <span class="bar-value">{cnt}</span>
+        </div>"""
+
+    contrib_bars_html = ""
+    for author, cnt in top_authors[:15]:
+        pct = 100 * cnt / max(max_author_count, 1)
+        contrib_bars_html += f"""
+        <div class="bar-row">
+          <span class="bar-label">@{_html_escape(author)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:{pct}%;background:#8b5cf6"></div></div>
+          <span class="bar-value">{cnt}</span>
+        </div>"""
+
+    huge_prs_html = ""
+    for pr in huge_prs[:20]:
+        num = pr["number"]
+        total = (pr.get("additions", 0) or 0) + (pr.get("deletions", 0) or 0)
+        author = _html_escape(pr.get("author", "?"))
+        title = _html_escape(pr.get("title", "")[:50])
+        huge_prs_html += f"""
+        <div class="huge-pr">
+          {pr_link(pr)} <span class="badge" style="background:#ef4444">{total} lines</span>
+          <span class="huge-pr-title">{title}</span>
+          <span class="huge-pr-author">@{author}</span>
+        </div>"""
+
+    if not huge_prs:
+        huge_prs_html = '<div class="empty-state">No huge PRs. 🎉</div>'
+
+    # ── Assemble full HTML ───────────────────────────────────────────
+    timestamp = NOW.strftime("%Y-%m-%d %H:%M UTC")
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moltbot Triage Dashboard</title>
+<style>
+  :root {{
+    --bg: #0f0f1a;
+    --bg2: #1a1a2e;
+    --bg3: #16213e;
+    --border: #2a2a4a;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --accent: #818cf8;
+    --link: #93c5fd;
+  }}
+  * {{ margin:0; padding:0; box-sizing:border-box; }}
+  body {{
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }}
+  .container {{ max-width:1200px; margin:0 auto; padding:20px; }}
+  h1 {{
+    font-size:2rem; font-weight:800; margin-bottom:0.5rem;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }}
+  .subtitle {{ color:var(--text2); font-size:0.95rem; margin-bottom:2rem; }}
+  h2 {{
+    font-size:1.4rem; font-weight:700; margin:2.5rem 0 1rem;
+    padding-bottom:0.5rem; border-bottom:2px solid var(--border);
+  }}
+  a {{ color:var(--link); text-decoration:none; }}
+  a:hover {{ text-decoration:underline; }}
+
+  /* Badges */
+  .badge {{
+    display:inline-block; padding:2px 10px; border-radius:12px;
+    font-size:0.75rem; font-weight:600; color:#fff;
+    vertical-align:middle; white-space:nowrap;
+  }}
+  .ci-dot {{
+    display:inline-block; width:10px; height:10px; border-radius:50%;
+    vertical-align:middle;
+  }}
+
+  /* Action cards */
+  .action-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }}
+  .action-card {{
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:20px; transition:border-color 0.2s;
+    border-left:4px solid #10b981;
+  }}
+  .action-card:hover {{ border-color:var(--accent); }}
+  .action-card-header {{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }}
+  .action-card-header a {{ font-size:1.1rem; font-weight:700; }}
+  .action-card-title {{ font-size:0.95rem; color:var(--text); margin-bottom:10px; }}
+  .action-card-meta {{ display:flex; gap:16px; font-size:0.8rem; color:var(--text2); flex-wrap:wrap; }}
+
+  /* Priority cards */
+  .priority-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px; }}
+  .priority-card {{
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+    padding:16px; transition:border-color 0.2s;
+  }}
+  .priority-card:hover {{ border-color:var(--accent); }}
+  .priority-card-header {{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }}
+  .priority-card-header a {{ font-size:1rem; font-weight:700; }}
+  .priority-card-title {{ font-size:0.9rem; color:var(--text); margin-bottom:8px; }}
+  .voter-count {{ font-size:0.8rem; color:var(--text2); margin-left:auto; }}
+  .voter-details {{ margin-top:8px; }}
+  .voter-details summary {{
+    cursor:pointer; font-size:0.8rem; color:var(--text2);
+    padding:4px 0;
+  }}
+  .voter-details summary:hover {{ color:var(--link); }}
+  .voter-entry {{
+    padding:8px 12px; margin-top:6px;
+    background:var(--bg); border-radius:6px; font-size:0.85rem;
+  }}
+  .voter-reason {{ color:var(--text2); margin-top:4px; font-size:0.8rem; }}
+
+  /* Trending */
+  .trending-list {{ display:flex; flex-direction:column; gap:6px; }}
+  .trending-item {{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 14px; background:var(--bg2); border-radius:8px;
+    border:1px solid var(--border); transition:border-color 0.2s;
+  }}
+  .trending-item:hover {{ border-color:var(--accent); }}
+  .trending-engagement {{ display:flex; gap:6px; flex-shrink:0; }}
+  .engagement-pill {{
+    font-size:0.75rem; padding:2px 8px; border-radius:10px;
+    background:var(--bg3); color:var(--text2); white-space:nowrap;
+  }}
+  .trending-title {{ font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+
+  /* Table */
+  .table-controls {{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
+    align-items:center;
+  }}
+  .filter-group {{ display:flex; gap:4px; flex-wrap:wrap; }}
+  .filter-btn {{
+    padding:4px 12px; border-radius:16px; border:1px solid var(--border);
+    background:var(--bg2); color:var(--text2); cursor:pointer;
+    font-size:0.8rem; transition:all 0.2s;
+  }}
+  .filter-btn:hover {{ border-color:var(--accent); color:var(--text); }}
+  .filter-btn.active {{ background:var(--accent); color:#fff; border-color:var(--accent); }}
+  .search-box {{
+    padding:6px 14px; border-radius:16px; border:1px solid var(--border);
+    background:var(--bg2); color:var(--text); font-size:0.85rem;
+    outline:none; width:200px;
+  }}
+  .search-box:focus {{ border-color:var(--accent); }}
+
+  table {{
+    width:100%; border-collapse:collapse; font-size:0.85rem;
+  }}
+  thead {{ position:sticky; top:0; }}
+  th {{
+    background:var(--bg3); padding:10px 12px; text-align:left;
+    border-bottom:2px solid var(--border); cursor:pointer;
+    user-select:none; white-space:nowrap;
+  }}
+  th:hover {{ color:var(--accent); }}
+  th .sort-arrow {{ font-size:0.7rem; margin-left:4px; }}
+  td {{
+    padding:8px 12px; border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }}
+  .title-cell {{ max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+  tr:hover td {{ background:var(--bg3); }}
+  tr.hidden {{ display:none; }}
+
+  /* Health stats */
+  .stats-grid {{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:14px; margin-bottom:24px;
+  }}
+  .stat-card {{
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+    padding:16px; text-align:center;
+  }}
+  .stat-value {{ font-size:1.8rem; font-weight:800; color:var(--accent); }}
+  .stat-label {{ font-size:0.8rem; color:var(--text2); margin-top:4px; }}
+
+  .health-section {{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }}
+  @media (max-width:768px) {{ .health-section {{ grid-template-columns:1fr; }} }}
+
+  .bar-chart {{ display:flex; flex-direction:column; gap:8px; }}
+  .bar-row {{ display:flex; align-items:center; gap:8px; }}
+  .bar-label {{ width:80px; font-size:0.8rem; color:var(--text2); text-align:right; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+  .bar-track {{ flex:1; height:20px; background:var(--bg); border-radius:4px; overflow:hidden; }}
+  .bar-fill {{ height:100%; border-radius:4px; transition:width 0.3s; min-width:2px; }}
+  .bar-value {{ width:30px; font-size:0.8rem; color:var(--text2); }}
+
+  .huge-pr {{
+    display:flex; align-items:center; gap:8px; padding:8px 0;
+    border-bottom:1px solid var(--border); font-size:0.85rem;
+    flex-wrap:wrap;
+  }}
+  .huge-pr-title {{ color:var(--text2); }}
+  .huge-pr-author {{ color:var(--text2); font-size:0.8rem; margin-left:auto; }}
+
+  .empty-state {{
+    padding:24px; text-align:center; color:var(--text2);
+    background:var(--bg2); border-radius:10px; border:1px dashed var(--border);
+  }}
+
+  footer {{
+    margin-top:3rem; padding:1.5rem 0; border-top:1px solid var(--border);
+    text-align:center; font-size:0.8rem; color:var(--text2);
+  }}
+
+  @media (max-width:600px) {{
+    .container {{ padding:12px; }}
+    h1 {{ font-size:1.4rem; }}
+    .action-grid, .priority-grid {{ grid-template-columns:1fr; }}
+    .stats-grid {{ grid-template-columns:repeat(2,1fr); }}
+    .bar-label {{ width:60px; font-size:0.7rem; }}
+    .table-controls {{ flex-direction:column; }}
+    .search-box {{ width:100%; }}
+  }}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔮 Moltbot Triage Dashboard</h1>
+  <p class="subtitle">{owner}/{repo} &middot; {total_issues} issues &middot; {total_prs} PRs &middot; Generated {timestamp}</p>
+
+  <!-- 🎯 REVIEW THESE FIRST -->
+  <h2>🎯 Action: Review These First</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">PRs that fix community-voted issues — the highest signal in this repo.</p>
+  <div class="action-grid">
+    {review_cards}
+  </div>
+
+  <!-- 🗳️ COMMUNITY PRIORITIES -->
+  <h2>🗳️ Community Priorities</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">Issues ranked by vote score. Click to expand voter reasoning.</p>
+  <div class="priority-grid">
+    {priority_cards}
+  </div>
+
+  <!-- 🔥 TRENDING -->
+  <h2>🔥 Trending (No Votes Yet)</h2>
+  <p style="color:var(--text2);margin-bottom:14px;font-size:0.9rem;">High-engagement issues without votes — consider voting on these.</p>
+  <div class="trending-list">
+    {trending_html}
+  </div>
+
+  <!-- 📋 ALL PRs -->
+  <h2>📋 All PRs</h2>
+  <div class="table-controls">
+    <input type="text" class="search-box" id="pr-search" placeholder="🔍 Search titles..." oninput="filterTable()">
+    <div class="filter-group" id="size-filters">
+      <button class="filter-btn active" data-filter="size" data-value="all" onclick="toggleFilter(this,'size')">All Sizes</button>
+      <button class="filter-btn" data-filter="size" data-value="tiny" onclick="toggleFilter(this,'size')">tiny</button>
+      <button class="filter-btn" data-filter="size" data-value="small" onclick="toggleFilter(this,'size')">small</button>
+      <button class="filter-btn" data-filter="size" data-value="medium" onclick="toggleFilter(this,'size')">medium</button>
+      <button class="filter-btn" data-filter="size" data-value="large" onclick="toggleFilter(this,'size')">large</button>
+      <button class="filter-btn" data-filter="size" data-value="huge" onclick="toggleFilter(this,'size')">huge</button>
+    </div>
+    <div class="filter-group" id="ci-filters">
+      <button class="filter-btn active" data-filter="ci" data-value="all" onclick="toggleFilter(this,'ci')">All CI</button>
+      <button class="filter-btn" data-filter="ci" data-value="passing" onclick="toggleFilter(this,'ci')">✅ passing</button>
+      <button class="filter-btn" data-filter="ci" data-value="failing" onclick="toggleFilter(this,'ci')">❌ failing</button>
+      <button class="filter-btn" data-filter="ci" data-value="pending" onclick="toggleFilter(this,'ci')">⏳ pending</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;">
+  <table id="pr-table">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0,'num')"># <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(1,'str')">Title <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(2,'num')">Size <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(3,'str')">CI <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(4,'str')">Review <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(5,'str')">Draft <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(6,'num')">Age <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(7,'str')">Author <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {all_pr_rows}
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 📊 REPOSITORY HEALTH -->
+  <h2>📊 Repository Health</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{total_issues}</div>
+      <div class="stat-label">Open Issues</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{total_prs}</div>
+      <div class="stat-label">Open PRs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{zero_review_pct:.0f}%</div>
+      <div class="stat-label">Zero Reviews</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{ci_fail_pct:.0f}%</div>
+      <div class="stat-label">CI Failing</div>
+    </div>
+  </div>
+
+  <div class="health-section">
+    <div>
+      <h3 style="margin-bottom:12px;font-size:1rem;">PR Size Distribution</h3>
+      <div class="bar-chart">
+        {size_bars_html}
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px;font-size:1rem;">Top Contributors</h3>
+      <div class="bar-chart">
+        {contrib_bars_html}
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px;margin-bottom:12px;font-size:1rem;">🐘 Huge PRs (&gt;{huge_threshold} lines)</h3>
+  <div>
+    {huge_prs_html}
+  </div>
+
+  <footer>
+    Generated {timestamp} by <a href="{github_base}" target="_blank">moltbot-triage</a> &middot;
+    Data from {total_issues} issues and {total_prs} pull requests
+  </footer>
+</div>
+
+<script>
+// ── Sort ────────────────────────────────────────────────────────────
+let sortCol = -1, sortAsc = true;
+function sortTable(col, type) {{
+  const table = document.getElementById('pr-table');
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.rows);
+  if (sortCol === col) {{ sortAsc = !sortAsc; }} else {{ sortCol = col; sortAsc = true; }}
+
+  rows.sort((a, b) => {{
+    let va = a.cells[col].getAttribute('data-sort') || a.cells[col].textContent.trim();
+    let vb = b.cells[col].getAttribute('data-sort') || b.cells[col].textContent.trim();
+    if (type === 'num') {{
+      va = parseFloat(va.replace(/[^0-9.-]/g,'')) || 0;
+      vb = parseFloat(vb.replace(/[^0-9.-]/g,'')) || 0;
+      return sortAsc ? va - vb : vb - va;
+    }}
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  }});
+  rows.forEach(r => tbody.appendChild(r));
+
+  // Update arrows
+  table.querySelectorAll('.sort-arrow').forEach(s => s.textContent = '');
+  table.rows[0].cells[col].querySelector('.sort-arrow').textContent = sortAsc ? '▲' : '▼';
+}}
+
+// ── Filters ─────────────────────────────────────────────────────────
+let activeFilters = {{ size: 'all', ci: 'all' }};
+function toggleFilter(btn, group) {{
+  const val = btn.getAttribute('data-value');
+  activeFilters[group] = val;
+  document.querySelectorAll(`[data-filter="${{group}}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTable();
+}}
+
+function filterTable() {{
+  const search = document.getElementById('pr-search').value.toLowerCase();
+  const rows = document.querySelectorAll('#pr-table tbody tr');
+  rows.forEach(row => {{
+    const size = row.getAttribute('data-size');
+    const ci = row.getAttribute('data-ci');
+    const title = row.cells[1].textContent.toLowerCase();
+    let show = true;
+    if (activeFilters.size !== 'all' && size !== activeFilters.size) show = false;
+    if (activeFilters.ci !== 'all' && ci !== activeFilters.ci) show = false;
+    if (search && !title.includes(search)) show = false;
+    row.classList.toggle('hidden', !show);
+  }});
+}}
+</script>
+</body>
+</html>"""
+
+    out_path = AGG_DIR / "index.html"
+    out_path.write_text(html, encoding="utf-8")
+    log(f"  Wrote index.html ({len(html)} bytes)")
+
+
 def main():
     log("Loading state files...")
     issues = load_all("issues")
@@ -542,6 +1175,7 @@ def main():
     generate_top_issues(issues, votes_map)
     generate_top_prs(prs, votes_map)
     generate_stats(issues, prs, votes_map)
+    generate_html_dashboard(issues, prs, votes_map)
 
     log("Done!")
 
