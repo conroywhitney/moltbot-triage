@@ -11,7 +11,7 @@
 <div class="container">
   <div class="page-header">
     <h1>✅ PRs Ready for Maintainer Review</h1>
-    <p>These PRs have passing CI and community engagement (reactions or reviews). They just need a maintainer to review and merge.</p>
+    <p>These PRs aren't failing CI and have community signal — an approved review, linked issue, or engagement. They're waiting on a maintainer to review and merge.</p>
   </div>
 
   <div id="table-container"></div>
@@ -27,11 +27,15 @@
   try {
     const prs = await fetchData('prs.json');
 
-    // Filter: passing CI, not draft, has some community signal
+    // Filter: not failing CI, not draft, has community signal (approved review, fixes issue, or engagement)
     const ready = prs.filter(pr =>
-      pr.ci_status === 'passing' &&
+      pr.ci_status !== 'failing' &&
       !pr.draft &&
-      ((pr.reactions_total || 0) > 0 || (pr.reviews && pr.reviews.length > 0) || (pr.comments_count || 0) > 0)
+      (
+        (pr.reviews && pr.reviews.some(r => r.state === 'APPROVED')) ||
+        (pr.fixes_issues && pr.fixes_issues.length > 0) ||
+        ((pr.reactions_total || 0) > 0 && (pr.comments_count || 0) > 0)
+      )
     );
 
     // Sort: PRs that fix issues first, then by reactions
