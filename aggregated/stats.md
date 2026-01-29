@@ -1,6 +1,6 @@
 # Repository Stats
 
-_Generated: 2026-01-29 15:31 UTC_
+_Generated: 2026-01-29 16:29 UTC_
 
 ## Overview
 
@@ -76,9 +76,9 @@ _Generated: 2026-01-29 15:31 UTC_
 | [#1746](https://github.com/moltbot/moltbot/pull/1746) | 4d | medium | failing | @aiccountant-bot | feat(tailscale): add socket option for userspace t |
 | [#1816](https://github.com/moltbot/moltbot/pull/1816) | 4d | large | failing | @mousberg | UI: dashboard refresh phase 2 - premium polish |
 | [#1822](https://github.com/moltbot/moltbot/pull/1822) | 4d | huge | failing | @dxd5001 | Fix: Enable scrolling on the dashboard config page |
-| [#1835](https://github.com/moltbot/moltbot/pull/1835) | 3d | small | failing | @Takhoffman | Agents: include runtime shell |
-| [#1846](https://github.com/moltbot/moltbot/pull/1846) | 3d | small | failing | @arthyn | fix(tlon): use HTTP-only poke for outbound to avoi |
-| [#1849](https://github.com/moltbot/moltbot/pull/1849) | 3d | small | failing | @radek-paclt | feat(cron): include delivery channel/to in finishe |
+| [#1835](https://github.com/moltbot/moltbot/pull/1835) | 4d | small | failing | @Takhoffman | Agents: include runtime shell |
+| [#1846](https://github.com/moltbot/moltbot/pull/1846) | 4d | small | failing | @arthyn | fix(tlon): use HTTP-only poke for outbound to avoi |
+| [#1849](https://github.com/moltbot/moltbot/pull/1849) | 4d | small | failing | @radek-paclt | feat(cron): include delivery channel/to in finishe |
 | [#1855](https://github.com/moltbot/moltbot/pull/1855) | 3d | large | failing | @garethpaul | feat(providers): add Poe API provider plugin |
 | [#1856](https://github.com/moltbot/moltbot/pull/1856) | 3d | huge | passing | @zerone0x | fix: untrack dist/control-ui build artifacts |
 | [#1859](https://github.com/moltbot/moltbot/pull/1859) | 3d | small | failing | @zerone0x | fix(agents): skip extracting tool calls from error |

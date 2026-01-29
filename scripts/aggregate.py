@@ -20,11 +20,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATE_DIR = BASE_DIR / "state"
 VOTES_DIR = BASE_DIR / "votes"
 AGG_DIR = BASE_DIR / "aggregated"
+CONFIG_PATH = BASE_DIR / "config.yml"
 
 AGG_DIR.mkdir(exist_ok=True)
 
 NOW = datetime.now(timezone.utc)
-STALE_DAYS = 7
+
+# Load config
+with open(CONFIG_PATH) as f:
+    CONFIG = yaml.safe_load(f)
+
+STALE_DAYS = CONFIG.get("staleness_days", 7)
+WEIGHTS = CONFIG.get("scoring", {}).get("weights", {})
+MULTI_VOTER_BONUS = CONFIG.get("scoring", {}).get("multi_voter_bonus", 0.5)
+PR_SIZES = CONFIG.get("pr_sizes", {"tiny": 10, "small": 50, "medium": 200, "large": 1000})
+REPORT_LIMITS = CONFIG.get("report_limits", {})
+PRIORITY_SCORES = CONFIG.get("priority_scores", {"critical": 10, "high": 7, "medium": 4, "low": 2})
 
 
 def log(msg):
@@ -91,14 +102,6 @@ def load_all(subdir):
         if data and "number" in data:
             items.append(data)
     return items
-
-
-PRIORITY_SCORES = {
-    "critical": 10,
-    "high": 7,
-    "medium": 4,
-    "low": 2,
-}
 
 
 def load_votes():
@@ -172,7 +175,7 @@ def vote_score(number, votes_map):
         return 0
     total_priority = sum(x["priority"] for x in v)
     voter_count = len(v)
-    return total_priority * (1 + 0.5 * (voter_count - 1))
+    return total_priority * (1 + MULTI_VOTER_BONUS * (voter_count - 1))
 
 
 def generate_top_issues(issues, votes_map):
@@ -186,7 +189,9 @@ def generate_top_issues(issues, votes_map):
         reactions = issue.get("reactions_total", 0) or 0
         comments = issue.get("comments_count", 0) or 0
         # Composite: vote score dominates, then reactions, then comments
-        composite = score * 100 + reactions * 5 + comments * 2
+        composite = (score * WEIGHTS.get("vote", 100)
+                     + reactions * WEIGHTS.get("reactions", 5)
+                     + comments * WEIGHTS.get("comments", 2))
         scored.append((composite, score, issue))
 
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -239,7 +244,7 @@ def generate_top_issues(issues, votes_map):
             continue
         lines.append(f"| [#{num}]({issue.get('url', '')}) | {reactions} | {comments} | {labels} | {title} |")
         count += 1
-        if count >= 30:
+        if count >= REPORT_LIMITS.get("top_engagement", 30):
             break
     lines.append("")
 
@@ -262,7 +267,10 @@ def generate_top_prs(prs, votes_map):
         reactions = pr.get("reactions_total", 0) or 0
         comments = pr.get("comments_count", 0) or 0
         
-        composite = (fix_score * 200) + (vote_s * 100) + reactions * 5 + comments * 2
+        composite = (fix_score * WEIGHTS.get("fixes_voted", 200)
+                     + vote_s * WEIGHTS.get("vote", 100)
+                     + reactions * WEIGHTS.get("reactions", 5)
+                     + comments * WEIGHTS.get("comments", 2))
         scored.append((composite, fix_score, vote_s, pr))
 
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -298,7 +306,7 @@ def generate_top_prs(prs, votes_map):
     lines.append("")
     lines.append("| # | Score | Size | CI | Review | Draft | Age | Title |")
     lines.append("|---|-------|------|----|--------|-------|-----|-------|")
-    for composite, _, _, pr in scored[:50]:
+    for composite, _, _, pr in scored[:REPORT_LIMITS.get("top_prs", 50)]:
         num = pr["number"]
         size = pr.get("size", "?")
         ci = pr.get("ci_status", "?")
@@ -343,7 +351,7 @@ def generate_stats(issues, prs, votes_map):
         for label in (issue.get("labels") or []):
             if isinstance(label, str):
                 label_counts[label] += 1
-    for label, count in label_counts.most_common(30):
+    for label, count in label_counts.most_common(REPORT_LIMITS.get("top_labels", 30)):
         bar = "█" * min(count, 50)
         lines.append(f"- **{label}**: {count} {bar}")
     lines.append("")
@@ -372,7 +380,8 @@ def generate_stats(issues, prs, votes_map):
     lines.append("")
 
     # Huge PRs (>1000 lines)
-    huge_prs = [p for p in prs if (p.get("additions", 0) or 0) + (p.get("deletions", 0) or 0) > 1000]
+    huge_threshold = PR_SIZES.get("large", 1000)
+    huge_prs = [p for p in prs if (p.get("additions", 0) or 0) + (p.get("deletions", 0) or 0) >= huge_threshold]
     if huge_prs:
         lines.append("## 🐘 Huge PRs (>1000 lines changed)")
         lines.append("")
@@ -406,7 +415,7 @@ def generate_stats(issues, prs, votes_map):
         lines.append("")
         lines.append("| # | Days Stale | Size | Author | Title |")
         lines.append("|---|-----------|------|--------|-------|")
-        for age, pr in stale_prs[:20]:
+        for age, pr in stale_prs[:REPORT_LIMITS.get("stale_prs", 20)]:
             num = pr["number"]
             size = pr.get("size", "?")
             author = pr.get("author", "?")
@@ -427,7 +436,7 @@ def generate_stats(issues, prs, votes_map):
         lines.append("")
         lines.append("| # | Age | Size | CI | Author | Title |")
         lines.append("|---|-----|------|----|--------|-------|")
-        for pr in no_review[:20]:
+        for pr in no_review[:REPORT_LIMITS.get("unreviewed_prs", 20)]:
             num = pr["number"]
             age = days_ago(parse_date(pr.get("created")))
             size = pr.get("size", "?")
@@ -458,7 +467,7 @@ def generate_stats(issues, prs, votes_map):
     lines.append("## 👥 Top Contributors (by open PR count)")
     lines.append("")
     author_counts = Counter(p.get("author", "ghost") for p in prs)
-    for author, count in author_counts.most_common(20):
+    for author, count in author_counts.most_common(REPORT_LIMITS.get("top_contributors", 20)):
         bar = "█" * min(count, 30)
         lines.append(f"- **@{author}**: {count} {bar}")
     lines.append("")
@@ -509,7 +518,7 @@ def generate_stats(issues, prs, votes_map):
         for label in (pr.get("labels") or []):
             if isinstance(label, str):
                 pr_label_counts[label] += 1
-    for label, count in pr_label_counts.most_common(20):
+    for label, count in pr_label_counts.most_common(REPORT_LIMITS.get("top_contributors", 20)):
         bar = "█" * min(count, 30)
         lines.append(f"- **{label}**: {count} {bar}")
     lines.append("")

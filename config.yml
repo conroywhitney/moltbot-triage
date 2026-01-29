@@ -1,0 +1,66 @@
+# config.yml — Scoring & filtering settings for moltbot-triage
+#
+# These values control how issues and PRs are ranked, filtered, and categorized.
+# Want to suggest changes? Open a PR or issue — these are meant to be discussed.
+
+# How we convert text priorities to numbers
+# Scale: 0-10, where 10 = "drop everything"
+priority_scores:
+  critical: 10
+  high: 7
+  medium: 4
+  low: 2
+
+# Composite score weights for ranking issues and PRs
+# Higher weight = more influence on final ranking
+#
+# The formula:
+#   issue_score = (vote_score × vote) + (reactions × reactions) + (comments × comments)
+#   pr_score    = (fix_vote_score × fixes_voted) + (vote_score × vote) + (reactions × reactions) + (comments × comments)
+#
+# Why these values?
+#   - Agent votes are the whole point — weighted highest
+#   - Fixing a voted issue is the highest signal for PRs (someone cares AND someone built it)
+#   - Reactions are lightweight social proof
+#   - Comments indicate discussion activity (not always quality, but attention)
+scoring:
+  weights:
+    vote: 100           # agent-human pair voted on this
+    fixes_voted: 200    # PR fixes an issue that was voted on (highest signal)
+    reactions: 5        # GitHub reactions (👍 etc.)
+    comments: 2         # comment count (activity signal)
+
+  # Vote score gets a multiplier for multiple voters
+  # Formula: total_priority × (1 + multi_voter_bonus × (voter_count - 1))
+  # With 0.5: 2 voters = 1.5x, 3 voters = 2x, etc.
+  multi_voter_bonus: 0.5
+
+# PR size categories (by total lines changed: additions + deletions)
+pr_sizes:
+  tiny: 10        # < 10 lines — trivial fix
+  small: 50       # < 50 lines — focused change
+  medium: 200     # < 200 lines — moderate scope
+  large: 1000     # < 1000 lines — significant work
+  # anything >= 1000 is "huge"
+
+# Staleness: days since last activity before a PR is considered stale
+staleness_days: 7
+
+# Report limits: how many items to show in each section
+report_limits:
+  top_engagement: 30    # non-voted issues shown in "top by engagement"
+  top_prs: 50           # PRs shown in "all PRs by priority"
+  stale_prs: 20         # oldest stale PRs to list
+  unreviewed_prs: 20    # oldest unreviewed PRs to list
+  top_contributors: 20  # contributors by PR count
+  top_labels: 30        # label distribution entries
+
+# GitHub sync settings
+sync:
+  owner: moltbot
+  repo: moltbot
+  issues_per_page: 100
+  prs_per_page: 50          # PRs have more fields, smaller batches
+  comments_per_issue: 50    # initial fetch; paginates if more
+  rate_limit_sleep: 1       # seconds between pages
+  error_retry_sleep: 60     # seconds to wait on GraphQL errors
