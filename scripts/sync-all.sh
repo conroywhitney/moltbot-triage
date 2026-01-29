@@ -19,8 +19,12 @@ bash "$SCRIPT_DIR/sync-issues.sh"
 log "=== Step 2/3: Syncing PRs ==="
 bash "$SCRIPT_DIR/sync-prs.sh"
 
-# Step 3: Aggregate
-log "=== Step 3/3: Running aggregation ==="
+# Step 3: Scrub secrets
+log "=== Step 3/4: Scrubbing secrets ==="
+python3 "$SCRIPT_DIR/scrub-secrets.py"
+
+# Step 4: Aggregate
+log "=== Step 4/4: Running aggregation ==="
 python3 "$SCRIPT_DIR/aggregate.py"
 
 log "=== All done! ==="
