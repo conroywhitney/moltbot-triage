@@ -1,7 +1,7 @@
 # Top PRs — Ranked
 
-_Generated: 2026-01-29 16:29 UTC_
-_Total open PRs: 473_
+_Generated: 2026-01-29 16:34 UTC_
+_Total open PRs: 486_
 
 ## 🎯 PRs Fixing Voted Issues (HIGH SIGNAL)
 
@@ -16,7 +16,7 @@ _Total open PRs: 473_
 | # | Score | Size | CI | Review | Draft | Age | Title |
 |---|-------|------|----|--------|-------|-----|-------|
 | [#3705](https://github.com/moltbot/moltbot/pull/3705) | 2006 | large | pending | none |  | 0d | feat(gateway): inject timestamps into agent + chat |
-| [#3838](https://github.com/moltbot/moltbot/pull/3838) | 1400 | tiny | pending | none |  | 0d | fix(agents): pass contextFiles to createAgentSessi |
+| [#3838](https://github.com/moltbot/moltbot/pull/3838) | 1402 | tiny | pending | none |  | 0d | fix(agents): pass contextFiles to createAgentSessi |
 | [#3878](https://github.com/moltbot/moltbot/pull/3878) | 800 | small | pending | none |  | 0d | fix(logging): use local timezone for console times |
 | [#1886](https://github.com/moltbot/moltbot/pull/1886) | 61 | large | pending | none |  | 3d | feat: Add nano-gpt.com as a provider |
 | [#2419](https://github.com/moltbot/moltbot/pull/2419) | 58 | large | failing | none |  | 2d | feat: add Maple AI provider integration |
@@ -45,13 +45,16 @@ _Total open PRs: 473_
 | [#2789](https://github.com/moltbot/moltbot/pull/2789) | 9 | large | failing | none |  | 2d | feat(channels): add Feishu/Lark channel integratio |
 | [#3856](https://github.com/moltbot/moltbot/pull/3856) | 9 | medium | pending | none |  | 0d | feat (macOS): add remote gateway token field (AI-a |
 | [#2960](https://github.com/moltbot/moltbot/pull/2960) | 8 | large | pending | none |  | 1d | feat: hierarchical memory structure (YYYY/MM/) wit |
+| [#3587](https://github.com/moltbot/moltbot/pull/3587) | 8 | small | pending | none |  | 0d | fix(message): disable cross-context marker by defa |
 | [#3650](https://github.com/moltbot/moltbot/pull/3650) | 8 | large | pending | none |  | 0d | feat(compaction): add post-compaction recovery tur |
 | [#1855](https://github.com/moltbot/moltbot/pull/1855) | 7 | large | failing | none |  | 3d | feat(providers): add Poe API provider plugin |
 | [#2603](https://github.com/moltbot/moltbot/pull/2603) | 7 | small | failing | none |  | 2d | Fix: Enable unlimited WhatsApp Web auto-reconnect  |
+| [#2906](https://github.com/moltbot/moltbot/pull/2906) | 7 | small | failing | none |  | 1d | fix: normalize Moonshot thinking signatures on mes |
 | [#1962](https://github.com/moltbot/moltbot/pull/1962) | 6 | small | failing | none |  | 3d | fix: release session locks on process termination  |
 | [#2071](https://github.com/moltbot/moltbot/pull/2071) | 6 | small | failing | none |  | 3d | fix: accept JSON string for cron.add job parameter |
 | [#2300](https://github.com/moltbot/moltbot/pull/2300) | 6 | tiny | pending | none |  | 2d | [AI-assisted] fix(mattermost): ensure replies crea |
 | [#2961](https://github.com/moltbot/moltbot/pull/2961) | 6 | medium | passing | none |  | 1d | fix(memory): support symlinks in memory file disco |
+| [#3109](https://github.com/moltbot/moltbot/pull/3109) | 6 | small | failing | none |  | 1d | fix(compaction): resolve model via runtime when ct |
 | [#1822](https://github.com/moltbot/moltbot/pull/1822) | 5 | huge | failing | none |  | 4d | Fix: Enable scrolling on the dashboard config page |
 | [#1943](https://github.com/moltbot/moltbot/pull/1943) | 5 | large | failing | none |  | 3d | Add jan.ai provider documentation |
 | [#1984](https://github.com/moltbot/moltbot/pull/1984) | 5 | small | failing | none |  | 3d | fix: identityLinks shares context across channels  |
@@ -62,6 +65,3 @@ _Total open PRs: 473_
 | [#2092](https://github.com/moltbot/moltbot/pull/2092) | 5 | tiny | passing | none |  | 3d | fix(nextcloud-talk): sign message text instead of  |
 | [#2225](https://github.com/moltbot/moltbot/pull/2225) | 5 | large | pending | none |  | 3d | Android: fix device identity/pairing + A2UI action |
 | [#2353](https://github.com/moltbot/moltbot/pull/2353) | 5 | tiny | failing | none |  | 2d | fix: ensure api field is set for inline provider m |
-| [#2605](https://github.com/moltbot/moltbot/pull/2605) | 5 | tiny | pending | none |  | 2d | feat (Discord): add direct Dev Portal new applicat |
-| [#2691](https://github.com/moltbot/moltbot/pull/2691) | 5 | large | failing | none |  | 2d | feat: add extraWorkspaceFiles config for custom bo |
-| [#3057](https://github.com/moltbot/moltbot/pull/3057) | 5 | tiny | failing | none |  | 1d | Fix TUI footer to show the actual model you're usi |

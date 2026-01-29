@@ -1,18 +1,18 @@
 # Repository Stats
 
-_Generated: 2026-01-29 16:29 UTC_
+_Generated: 2026-01-29 16:34 UTC_
 
 ## Overview
 
-- **Open Issues:** 562
-- **Open PRs:** 473
-- **Draft PRs:** 2
+- **Open Issues:** 576
+- **Open PRs:** 486
+- **Draft PRs:** 3
 - **Voted Issues:** 7
 
 ## Issues by Label
 
-- **bug**: 265 ██████████████████████████████████████████████████
-- **enhancement**: 166 ██████████████████████████████████████████████████
+- **bug**: 267 ██████████████████████████████████████████████████
+- **enhancement**: 167 ██████████████████████████████████████████████████
 - **extensions: memory-core**: 4 ████
 - **question**: 3 ███
 - **app: web-ui**: 3 ███
@@ -34,18 +34,19 @@ _Generated: 2026-01-29 16:29 UTC_
 
 ## PR Size Distribution
 
-- **tiny** (<10/50/200/1000/>1000 lines): 68 ██████████████████████████████████████████████████
-- **small** (<10/50/200/1000/>1000 lines): 134 ██████████████████████████████████████████████████
-- **medium** (<10/50/200/1000/>1000 lines): 130 ██████████████████████████████████████████████████
-- **large** (<10/50/200/1000/>1000 lines): 129 ██████████████████████████████████████████████████
-- **huge** (<10/50/200/1000/>1000 lines): 12 ████████████
+- **tiny** (<10/50/200/1000/>1000 lines): 71 ██████████████████████████████████████████████████
+- **small** (<10/50/200/1000/>1000 lines): 137 ██████████████████████████████████████████████████
+- **medium** (<10/50/200/1000/>1000 lines): 129 ██████████████████████████████████████████████████
+- **large** (<10/50/200/1000/>1000 lines): 134 ██████████████████████████████████████████████████
+- **huge** (<10/50/200/1000/>1000 lines): 15 ███████████████
 
-- **Average PR size:** 266 lines (109020+ / 16615-)
+- **Average PR size:** 296 lines (127244+ / 16776-)
 
 ## 🐘 Huge PRs (>1000 lines changed)
 
 | # | Lines | Files | Author | Title |
 |---|-------|-------|--------|-------|
+| [#4062](https://github.com/moltbot/moltbot/pull/4062) | 13718 | 8 | @David-Marsh-Photo | feat(discord): add reactionTrigger config for invo |
 | [#1822](https://github.com/moltbot/moltbot/pull/1822) | 13398 | 2 | @dxd5001 | Fix: Enable scrolling on the dashboard config page |
 | [#2216](https://github.com/moltbot/moltbot/pull/2216) | 6847 | 52 | @justelson | UI: Redesign with Tangerine theme and multi-theme  |
 | [#4029](https://github.com/moltbot/moltbot/pull/4029) | 4974 | 25 | @RemyLoveLogicAI | checkout |
@@ -56,8 +57,10 @@ _Generated: 2026-01-29 16:29 UTC_
 | [#3160](https://github.com/moltbot/moltbot/pull/3160) | 2068 | 29 | @vignesh07 | feat (memory): Implement new (opt-in) QMD memory b |
 | [#2085](https://github.com/moltbot/moltbot/pull/2085) | 1749 | 26 | @Glucksberg | feat(gateway): add human-in-the-loop approval for  |
 | [#2894](https://github.com/moltbot/moltbot/pull/2894) | 1645 | 21 | @chrisherold | iOS: implement dual-connection gateway architectur |
+| [#4066](https://github.com/moltbot/moltbot/pull/4066) | 1460 | 4 | @velrino | [WIP][FEATURE] Add Google Cloud (Compute Engine) d |
 | [#1985](https://github.com/moltbot/moltbot/pull/1985) | 1255 | 14 | @kesku | feat: Add Perplexity Search API as web_search prov |
 | [#2524](https://github.com/moltbot/moltbot/pull/2524) | 1028 | 18 | @iHildy | feat: Add OAuth option to Google Chat |
+| [#4058](https://github.com/moltbot/moltbot/pull/4058) | 1024 | 11 | @VACInc | Security: harden web tools and file parsing |
 
 ## PR Staleness
 
@@ -65,7 +68,7 @@ _Generated: 2026-01-29 16:29 UTC_
 
 ## 👀 PRs with No Reviews
 
-- **Non-draft PRs with zero reviews:** 417 / 473 (88%)
+- **Non-draft PRs with zero reviews:** 429 / 486 (88%)
 
 ### Oldest Unreviewed PRs
 
@@ -94,7 +97,7 @@ _Generated: 2026-01-29 16:29 UTC_
 
 ## 🔴 PRs with CI Failures
 
-- **CI failing:** 276
+- **CI failing:** 293
 
 | # | Size | Author | Title |
 |---|------|--------|-------|
@@ -254,6 +257,7 @@ _Generated: 2026-01-29 16:29 UTC_
 | [#3059](https://github.com/moltbot/moltbot/pull/3059) | large | @hotfingerdip | feat(telegram): add forum topic management actions |
 | [#3063](https://github.com/moltbot/moltbot/pull/3063) | tiny | @maax6 | feat(ui): enable horizontal wheel scroll on nav me |
 | [#3070](https://github.com/moltbot/moltbot/pull/3070) | tiny | @shanselman | Friendlier Windows onboarding message |
+| [#3071](https://github.com/moltbot/moltbot/pull/3071) | tiny | @rabsef-bicrym | fix: WhatsApp 515 error retry not triggering |
 | [#3084](https://github.com/moltbot/moltbot/pull/3084) | medium | @dominicnunez | fix: include stable entry ID in chat.history messa |
 | [#3093](https://github.com/moltbot/moltbot/pull/3093) | medium | @samirrayani | feat(slack): add thread.followOnMention config |
 | [#3109](https://github.com/moltbot/moltbot/pull/3109) | small | @bonald | fix(compaction): resolve model via runtime when ct |
@@ -293,6 +297,7 @@ _Generated: 2026-01-29 16:29 UTC_
 | [#3297](https://github.com/moltbot/moltbot/pull/3297) | large | @sjhddh | feat(models): add OPENAI_BASE_URL env override for |
 | [#3299](https://github.com/moltbot/moltbot/pull/3299) | large | @tiandee | feat(session): add TTL/auto-cleanup for idle sessi |
 | [#3300](https://github.com/moltbot/moltbot/pull/3300) | tiny | @KimEJ | changed chat session selection logic in iMessage |
+| [#3301](https://github.com/moltbot/moltbot/pull/3301) | small | @Glucksberg | feat(agents): add per-agent thinkingDefault overri |
 | [#3304](https://github.com/moltbot/moltbot/pull/3304) | tiny | @abhijeet117 | Fix potential subprocess hang by discarding stderr |
 | [#3305](https://github.com/moltbot/moltbot/pull/3305) | large | @henryhe1993 | feat(providers): Add ZenMux as an AI Provider 🦞  [ |
 | [#3322](https://github.com/moltbot/moltbot/pull/3322) | small | @nulone | fix: merge provider config api into registry model |
@@ -321,15 +326,21 @@ _Generated: 2026-01-29 16:29 UTC_
 | [#3410](https://github.com/moltbot/moltbot/pull/3410) | tiny | @sakunsylvi | fix(sessions): always compute session paths from c |
 | [#3420](https://github.com/moltbot/moltbot/pull/3420) | small | @zarianl | fix: skip heartbeat wake for subagent exec complet |
 | [#3421](https://github.com/moltbot/moltbot/pull/3421) | medium | @mike-nott | fix(memory-lancedb): improve capture/recall filter |
+| [#3424](https://github.com/moltbot/moltbot/pull/3424) | tiny | @abhijeet117 | Use structured concurrency instead of Task.detache |
 | [#3428](https://github.com/moltbot/moltbot/pull/3428) | medium | @CoderMariusz | feat(hooks): wire up message_sent plugin hook |
 | [#3429](https://github.com/moltbot/moltbot/pull/3429) | tiny | @p6l-richard | feat(identity): include emoji in message prefix |
+| [#3440](https://github.com/moltbot/moltbot/pull/3440) | medium | @elliotsecops | feat(deploy): add systemd templates for production |
+| [#3448](https://github.com/moltbot/moltbot/pull/3448) | medium | @hi-yu | docs: Add Tencent Cloud Lighthouse platform guide |
 | [#3450](https://github.com/moltbot/moltbot/pull/3450) | medium | @anandsuraj | feat: Agent routing in webhook mappings (Issue #34 |
+| [#3454](https://github.com/moltbot/moltbot/pull/3454) | large | @WqyJh | feat: support xiaomi/mimo-v2-flash |
+| [#3474](https://github.com/moltbot/moltbot/pull/3474) | medium | @elektricM | fix(macos): menu bar activity badge not showing du |
 | [#3507](https://github.com/moltbot/moltbot/pull/3507) | large | @ronit111 | [AI-Assisted] feat(gateway): add HTTP health endpo |
 | [#3510](https://github.com/moltbot/moltbot/pull/3510) | large | @hershey-g | fix(voice-call): wait for TTS completion before no |
 | [#3527](https://github.com/moltbot/moltbot/pull/3527) | large | @growthringsadvisory | fix: detect and manage systemd system services |
 | [#3561](https://github.com/moltbot/moltbot/pull/3561) | large | @adityarao3 | fix: fail fast when both state dirs exist |
 | [#3581](https://github.com/moltbot/moltbot/pull/3581) | small | @DavidSt49 | fix: add DeepSeek to non-standard providers (fixes |
 | [#3583](https://github.com/moltbot/moltbot/pull/3583) | large | @tylerdiaz | feat(telegram): forum topics + pinned message cont |
+| [#3648](https://github.com/moltbot/moltbot/pull/3648) | medium | @nhangen | feat: add windows powershell support to system pro |
 | [#3655](https://github.com/moltbot/moltbot/pull/3655) | small | @Heldinhow | auto-reply: adicionar notificações automáticas de  |
 | [#3683](https://github.com/moltbot/moltbot/pull/3683) | small | @xovoxy | feat(infra): introduce global proxy configuration  |
 | [#3686](https://github.com/moltbot/moltbot/pull/3686) | small | @MaxMiksa | fix(security): bind temporary media server to loop |
@@ -372,8 +383,17 @@ _Generated: 2026-01-29 16:29 UTC_
 | [#3984](https://github.com/moltbot/moltbot/pull/3984) | large | @saurabh | feat(exec): Add pre-exec command hooks for workspa |
 | [#3993](https://github.com/moltbot/moltbot/pull/3993) | medium | @WallaceSociety | Fix: Plugin hooks registered but never fire #3249 |
 | [#4001](https://github.com/moltbot/moltbot/pull/4001) | tiny | @YLChen-007 | fix(security): harden SSH target handling to preve |
+| [#4009](https://github.com/moltbot/moltbot/pull/4009) | small | @drag88 | fix(agent): sanitize messages after orphan user re |
+| [#4020](https://github.com/moltbot/moltbot/pull/4020) | medium | @Inokinoki | feat(agents): allow to set z.ai base URL to use ot |
 | [#4026](https://github.com/moltbot/moltbot/pull/4026) | large | @davidbors-snyk | fix: execute sandboxed file ops inside containers |
 | [#4031](https://github.com/moltbot/moltbot/pull/4031) | large | @williamwa | Fix reply post in thread in slack |
+| [#4042](https://github.com/moltbot/moltbot/pull/4042) | large | @freedomzt | agents: add proactive compaction before request |
+| [#4045](https://github.com/moltbot/moltbot/pull/4045) | large | @largezhou | feat: add Feishu channel plugins |
+| [#4054](https://github.com/moltbot/moltbot/pull/4054) | large | @SamyMe | feat: add Eden AI provider support |
+| [#4057](https://github.com/moltbot/moltbot/pull/4057) | tiny | @wangchuan3533 | fix: sanitize tool call IDs for Azure OpenAI |
+| [#4058](https://github.com/moltbot/moltbot/pull/4058) | huge | @VACInc | Security: harden web tools and file parsing |
+| [#4062](https://github.com/moltbot/moltbot/pull/4062) | huge | @David-Marsh-Photo | feat(discord): add reactionTrigger config for invo |
+| [#4064](https://github.com/moltbot/moltbot/pull/4064) | tiny | @shatner | Docs: Direct link to BotFather on Telegram |
 
 ## 👥 Top Contributors (by open PR count)
 
@@ -412,19 +432,19 @@ _Generated: 2026-01-29 16:29 UTC_
 
 ## PR Labels
 
-- **agents**: 138 ██████████████████████████████
-- **docs**: 104 ██████████████████████████████
-- **gateway**: 65 ██████████████████████████████
-- **commands**: 48 ██████████████████████████████
-- **cli**: 40 ██████████████████████████████
-- **app: web-ui**: 31 ██████████████████████████████
-- **docker**: 19 ███████████████████
-- **channel: telegram**: 16 ████████████████
+- **agents**: 144 ██████████████████████████████
+- **docs**: 108 ██████████████████████████████
+- **gateway**: 67 ██████████████████████████████
+- **commands**: 50 ██████████████████████████████
+- **cli**: 41 ██████████████████████████████
+- **app: web-ui**: 32 ██████████████████████████████
+- **docker**: 20 ████████████████████
+- **channel: telegram**: 17 █████████████████
 - **channel: slack**: 14 ██████████████
-- **channel: discord**: 12 ████████████
+- **channel: discord**: 13 █████████████
 - **channel: whatsapp-web**: 12 ████████████
 - **app: macos**: 12 ████████████
-- **scripts**: 10 ██████████
+- **scripts**: 11 ███████████
 - **channel: voice-call**: 6 ██████
 - **channel: signal**: 5 █████
 - **app: ios**: 4 ████
