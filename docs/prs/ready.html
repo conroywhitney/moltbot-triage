@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ready to Merge — Moltbot Triage</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+<div class="container">
+  <div class="page-header">
+    <h1>✅ PRs Ready for Maintainer Review</h1>
+    <p>These PRs have passing CI and community engagement (reactions or reviews). They just need a maintainer to review and merge.</p>
+  </div>
+
+  <div id="table-container"></div>
+
+  <footer>
+    <a href="../index.html">← Back to overview</a>
+  </footer>
+</div>
+
+<script src="../assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const prs = await fetchData('prs.json');
+
+    // Filter: passing CI, not draft, has some community signal
+    const ready = prs.filter(pr =>
+      pr.ci_status === 'passing' &&
+      !pr.draft &&
+      ((pr.reactions_total || 0) > 0 || (pr.reviews && pr.reviews.length > 0) || (pr.comments_count || 0) > 0)
+    );
+
+    // Sort: PRs that fix issues first, then by reactions
+    ready.sort((a, b) => {
+      const aFixes = (a.fixes_issues || []).length;
+      const bFixes = (b.fixes_issues || []).length;
+      if (aFixes !== bFixes) return bFixes - aFixes;
+      return (b.reactions_total || 0) - (a.reactions_total || 0);
+    });
+
+    const columns = [
+      { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+      { header: 'Title', className: 'title-cell', render: pr => `<span title="${escapeHtml(pr.title)}">${escapeHtml(pr.title.substring(0, 70))}${pr.title.length > 70 ? '…' : ''}</span>`, sortValue: pr => pr.title },
+      { header: 'Size', sortType: 'num', render: pr => renderBadge('size', pr.size), sortValue: pr => (pr.additions || 0) + (pr.deletions || 0) },
+      { header: 'Fixes', render: pr => (pr.fixes_issues || []).map(n => issueLink(n)).join(', ') || '—' },
+      { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
+      { header: 'Age', sortType: 'num', render: pr => timeAgo(pr.created), sortValue: pr => daysAgo(pr.created) },
+      { header: 'Reviews', sortType: 'num', render: pr => String((pr.reviews || []).length), sortValue: pr => (pr.reviews || []).length },
+    ];
+
+    renderTable('table-container', ready, columns, {
+      emptyMessage: 'No PRs currently meet all criteria. Check all PRs for the full list.',
+      tableId: 'ready-table'
+    });
+  } catch (e) {
+    console.error(e);
+    document.getElementById('table-container').innerHTML = '<div class="empty-state">Failed to load data.</div>';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repository Health — Moltbot Triage</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<script src="assets/nav.js"></script>
+<div class="container">
+  <div class="page-header">
+    <h1>📊 Repository Health</h1>
+    <p>Key metrics and distributions for moltbot/moltbot.</p>
+  </div>
+
+  <div class="stats-grid" id="stats-cards"></div>
+
+  <div class="health-grid">
+    <div>
+      <h3>PR Size Distribution</h3>
+      <div id="size-chart"></div>
+    </div>
+    <div>
+      <h3>Top Contributors (by open PR count)</h3>
+      <div id="contrib-chart"></div>
+    </div>
+  </div>
+
+  <div class="health-grid" style="margin-top:2rem;">
+    <div>
+      <h3>Issue Labels</h3>
+      <div id="label-chart"></div>
+    </div>
+    <div>
+      <h3>PR Labels</h3>
+      <div id="pr-label-chart"></div>
+    </div>
+  </div>
+
+  <h2>🐘 Huge PRs Summary</h2>
+  <p style="color:var(--text2);margin-bottom:1rem;font-size:0.9rem;">
+    PRs with 1,000+ lines changed.
+    <a href="prs/huge.html">View full list →</a>
+  </p>
+  <div id="huge-summary"></div>
+
+  <footer>
+    <a href="index.html">← Back to overview</a>
+  </footer>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const stats = await fetchData('stats.json');
+    const prs = await fetchData('prs.json');
+
+    // Stat cards
+    document.getElementById('stats-cards').innerHTML =
+      renderStatCard('Open Issues', stats.total_issues) +
+      renderStatCard('Open PRs', stats.total_prs) +
+      renderStatCard('Zero Reviews', stats.zero_review_pct + '%') +
+      renderStatCard('CI Failing', stats.ci_failing_pct + '%') +
+      renderStatCard('Avg PR Size', stats.avg_pr_size + ' lines') +
+      renderStatCard('Draft PRs', stats.draft_prs);
+
+    // Size distribution
+    const sizeOrder = ['tiny', 'small', 'medium', 'large', 'huge'];
+    const sizeColors = { tiny: '#6b7280', small: '#10b981', medium: '#f59e0b', large: '#f97316', huge: '#ef4444' };
+    const sizeData = sizeOrder
+      .filter(s => stats.size_distribution[s])
+      .map(s => ({ label: s, value: stats.size_distribution[s], color: sizeColors[s] }));
+    renderBarChart('size-chart', sizeData);
+
+    // Contributors
+    const contribData = (stats.top_contributors || []).slice(0, 15).map(c => ({
+      label: '@' + c.author, value: c.count, color: '#8b5cf6'
+    }));
+    renderBarChart('contrib-chart', contribData);
+
+    // Issue labels
+    const labelData = Object.entries(stats.label_distribution || {}).slice(0, 15).map(([k, v]) => ({
+      label: k, value: v, color: '#818cf8'
+    }));
+    renderBarChart('label-chart', labelData);
+
+    // PR labels
+    const prLabelData = Object.entries(stats.pr_label_distribution || {}).slice(0, 15).map(([k, v]) => ({
+      label: k, value: v, color: '#f59e0b'
+    }));
+    renderBarChart('pr-label-chart', prLabelData);
+
+    // Huge PRs summary
+    const huge = prs.filter(pr => (pr.additions || 0) + (pr.deletions || 0) >= 1000);
+    if (huge.length === 0) {
+      document.getElementById('huge-summary').innerHTML = '<div class="empty-state">No huge PRs. 🎉</div>';
+    } else {
+      huge.sort((a, b) => ((b.additions||0)+(b.deletions||0)) - ((a.additions||0)+(a.deletions||0)));
+      const columns = [
+        { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+        { header: 'Title', className: 'title-cell', render: pr => escapeHtml(pr.title.substring(0, 50)), sortValue: pr => pr.title },
+        { header: 'Lines', sortType: 'num', render: pr => ((pr.additions||0)+(pr.deletions||0)).toLocaleString(), sortValue: pr => (pr.additions||0)+(pr.deletions||0) },
+        { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
+      ];
+      renderTable('huge-summary', huge.slice(0, 10), columns, { tableId: 'huge-table' });
+    }
+  } catch (e) {
+    console.error(e);
+    document.getElementById('stats-cards').innerHTML = '<div class="empty-state">Failed to load data.</div>';
+  }
+})();
+</script>
+</body>
+</html>

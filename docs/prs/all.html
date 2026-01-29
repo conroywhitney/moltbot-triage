@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All PRs — Moltbot Triage</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+<div class="container">
+  <div class="page-header">
+    <h1>📋 All Open Pull Requests</h1>
+    <p>Full sortable, filterable, searchable table of every open PR.</p>
+  </div>
+
+  <div class="table-controls">
+    <input type="text" class="search-box" id="pr-search" placeholder="🔍 Search titles...">
+    <div class="filter-group">
+      <button class="filter-btn active" data-group="size" data-value="all">All Sizes</button>
+      <button class="filter-btn" data-group="size" data-value="tiny">tiny</button>
+      <button class="filter-btn" data-group="size" data-value="small">small</button>
+      <button class="filter-btn" data-group="size" data-value="medium">medium</button>
+      <button class="filter-btn" data-group="size" data-value="large">large</button>
+      <button class="filter-btn" data-group="size" data-value="huge">huge</button>
+    </div>
+    <div class="filter-group">
+      <button class="filter-btn active" data-group="ci" data-value="all">All CI</button>
+      <button class="filter-btn" data-group="ci" data-value="passing">✅ passing</button>
+      <button class="filter-btn" data-group="ci" data-value="failing">❌ failing</button>
+      <button class="filter-btn" data-group="ci" data-value="pending">⏳ pending</button>
+    </div>
+    <div class="filter-group">
+      <button class="filter-btn active" data-group="draft" data-value="all">All</button>
+      <button class="filter-btn" data-group="draft" data-value="false">Not Draft</button>
+      <button class="filter-btn" data-group="draft" data-value="true">Draft</button>
+    </div>
+  </div>
+
+  <div id="table-container"></div>
+
+  <footer>
+    <a href="../index.html">← Back to overview</a>
+  </footer>
+</div>
+
+<script src="../assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const prs = await fetchData('prs.json');
+
+    // Sort by newest first
+    prs.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+    const columns = [
+      { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+      { header: 'Title', className: 'title-cell', render: pr => `<span title="${escapeHtml(pr.title)}">${escapeHtml(pr.title.substring(0, 65))}${pr.title.length > 65 ? '…' : ''}</span>`, sortValue: pr => pr.title },
+      { header: 'Size', sortType: 'num', render: pr => renderBadge('size', pr.size), sortValue: pr => (pr.additions||0)+(pr.deletions||0) },
+      { header: 'CI', render: pr => renderBadge('ci', pr.ci_status), sortValue: pr => pr.ci_status },
+      { header: 'Review', render: pr => escapeHtml(pr.review_decision), sortValue: pr => pr.review_decision },
+      { header: 'Draft', render: pr => pr.draft ? '✏️ Yes' : 'No' },
+      { header: 'Age', sortType: 'num', render: pr => timeAgo(pr.created), sortValue: pr => daysAgo(pr.created) },
+      { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
+      { header: 'Files', sortType: 'num', render: pr => String(pr.changed_files || 0), sortValue: pr => pr.changed_files || 0 },
+    ];
+
+    renderTable('table-container', prs, columns, {
+      tableId: 'all-prs-table',
+      rowAttrs: pr => `data-size="${pr.size}" data-ci="${pr.ci_status}" data-draft="${pr.draft}"`
+    });
+
+    // Wire up filters
+    setupSearch('pr-search', 'all-prs-table');
+    setupFilters('filter-btn', 'all-prs-table', null);
+
+    // Also wire search to respect filters
+    document.getElementById('pr-search').addEventListener('input', () => applyAllFilters('all-prs-table'));
+  } catch (e) {
+    console.error(e);
+    document.getElementById('table-container').innerHTML = '<div class="empty-state">Failed to load data.</div>';
+  }
+})();
+</script>
+</body>
+</html>

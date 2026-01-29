@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync-all.sh — Run full sync pipeline: issues → PRs → aggregate
+# sync-all.sh — Run full sync pipeline: issues → PRs → aggregate → docs/data/
 # Cron-safe: all output to stderr, exits cleanly
 set -euo pipefail
 
@@ -12,20 +12,20 @@ log "Starting full sync..."
 log "Triage dir: $TRIAGE_DIR"
 
 # Step 1: Sync issues
-log "=== Step 1/3: Syncing issues ==="
+log "=== Step 1/4: Syncing issues ==="
 bash "$SCRIPT_DIR/sync-issues.sh"
 
 # Step 2: Sync PRs
-log "=== Step 2/3: Syncing PRs ==="
+log "=== Step 2/4: Syncing PRs ==="
 bash "$SCRIPT_DIR/sync-prs.sh"
 
 # Step 3: Scrub secrets
 log "=== Step 3/4: Scrubbing secrets ==="
 python3 "$SCRIPT_DIR/scrub-secrets.py"
 
-# Step 4: Aggregate
-log "=== Step 4/4: Running aggregation ==="
+# Step 4: Aggregate → JSON
+log "=== Step 4/4: Generating dashboard data ==="
 python3 "$SCRIPT_DIR/aggregate.py"
 
 log "=== All done! ==="
-log "Results in: $TRIAGE_DIR/aggregated/"
+log "Results in: $TRIAGE_DIR/docs/data/"

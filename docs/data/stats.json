@@ -1,0 +1,141 @@
+{
+  "total_issues": 576,
+  "total_prs": 486,
+  "draft_prs": 3,
+  "zero_review_pct": 88,
+  "ci_failing_pct": 60,
+  "avg_pr_size": 296,
+  "label_distribution": {
+    "bug": 267,
+    "enhancement": 167,
+    "extensions: memory-core": 4,
+    "question": 3,
+    "app: web-ui": 3,
+    "pi-issue": 2,
+    "channel: discord": 2,
+    "gateway": 2,
+    "channel: slack": 2,
+    "help wanted": 2,
+    "cannot-reproduce": 1,
+    "channel: telegram": 1,
+    "agents": 1,
+    "channel: matrix": 1,
+    "cli": 1,
+    "extensions: diagnostics-otel": 1,
+    "channel: voice-call": 1,
+    "channel: whatsapp-web": 1,
+    "channel: nextcloud-talk": 1,
+    "r: third-party-extension": 1
+  },
+  "pr_label_distribution": {
+    "agents": 144,
+    "docs": 108,
+    "gateway": 67,
+    "commands": 50,
+    "cli": 41,
+    "app: web-ui": 32,
+    "docker": 20,
+    "channel: telegram": 17,
+    "channel: slack": 14,
+    "channel: discord": 13,
+    "channel: whatsapp-web": 12,
+    "app: macos": 12,
+    "scripts": 11,
+    "channel: voice-call": 6,
+    "channel: signal": 5,
+    "app: ios": 4,
+    "channel: googlechat": 4,
+    "extensions: google-gemini-cli-auth": 4,
+    "channel: tlon": 3,
+    "app: android": 3
+  },
+  "size_distribution": {
+    "huge": 15,
+    "large": 134,
+    "medium": 129,
+    "small": 137,
+    "tiny": 71
+  },
+  "top_contributors": [
+    {
+      "author": "hclsys",
+      "count": 9
+    },
+    {
+      "author": "Glucksberg",
+      "count": 7
+    },
+    {
+      "author": "HirokiKobayashi-R",
+      "count": 7
+    },
+    {
+      "author": "ronit111",
+      "count": 6
+    },
+    {
+      "author": "zerone0x",
+      "count": 5
+    },
+    {
+      "author": "Episkey-G",
+      "count": 5
+    },
+    {
+      "author": "Lukavyi",
+      "count": 5
+    },
+    {
+      "author": "ThanhNguyxn",
+      "count": 4
+    },
+    {
+      "author": "spanishflu-est1918",
+      "count": 4
+    },
+    {
+      "author": "impozzible",
+      "count": 4
+    },
+    {
+      "author": "Suksham-sharma",
+      "count": 4
+    },
+    {
+      "author": "elliotsecops",
+      "count": 4
+    },
+    {
+      "author": "robbyczgw-cla",
+      "count": 4
+    },
+    {
+      "author": "ai-fanatic",
+      "count": 4
+    },
+    {
+      "author": "fancyboi999",
+      "count": 3
+    },
+    {
+      "author": "papago2355",
+      "count": 3
+    },
+    {
+      "author": "YuriNachos",
+      "count": 3
+    },
+    {
+      "author": "webdevtodayjason",
+      "count": 3
+    },
+    {
+      "author": "steve-rodri",
+      "count": 3
+    },
+    {
+      "author": "innoiso",
+      "count": 3
+    }
+  ]
+}

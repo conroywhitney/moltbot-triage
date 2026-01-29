@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trending Issues — Moltbot Triage</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+<div class="container">
+  <div class="page-header">
+    <h1>🔥 Most Engaged Issues</h1>
+    <p>Issues ranked by community engagement — reactions and comments weighted.</p>
+  </div>
+
+  <div id="table-container"></div>
+
+  <footer>
+    <a href="../index.html">← Back to overview</a>
+  </footer>
+</div>
+
+<script src="../assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const issues = await fetchData('issues.json');
+
+    // Score: reactions * 3 + comments
+    const scored = issues
+      .map(i => ({ ...i, _score: (i.reactions_total || 0) * 3 + (i.comments_count || 0) }))
+      .filter(i => i._score > 0)
+      .sort((a, b) => b._score - a._score);
+
+    const columns = [
+      { header: '#', sortType: 'num', render: i => `<a href="${escapeHtml(i.url)}" target="_blank">#${i.number}</a>`, sortValue: i => i.number },
+      { header: 'Title', className: 'title-cell', render: i => `<span title="${escapeHtml(i.title)}">${escapeHtml(i.title.substring(0, 70))}${i.title.length > 70 ? '…' : ''}</span>`, sortValue: i => i.title },
+      { header: '👍', sortType: 'num', render: i => String(i.reactions_total || 0), sortValue: i => i.reactions_total || 0 },
+      { header: '💬', sortType: 'num', render: i => String(i.comments_count || 0), sortValue: i => i.comments_count || 0 },
+      { header: 'Labels', render: i => (i.labels || []).map(l => renderBadge('label', l)).join(' ') },
+      { header: 'Author', render: i => '@' + escapeHtml(i.author) },
+      { header: 'Age', sortType: 'num', render: i => timeAgo(i.created), sortValue: i => daysAgo(i.created) },
+    ];
+
+    renderTable('table-container', scored, columns, {
+      emptyMessage: 'No issues with engagement found.',
+      tableId: 'trending-table'
+    });
+  } catch (e) {
+    console.error(e);
+    document.getElementById('table-container').innerHTML = '<div class="empty-state">Failed to load data.</div>';
+  }
+})();
+</script>
+</body>
+</html>

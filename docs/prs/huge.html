@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oversized PRs — Moltbot Triage</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+<div class="container">
+  <div class="page-header">
+    <h1>🐘 PRs Over 1,000 Lines Changed</h1>
+    <p>Large PRs are harder to review. Maintainers may ask these to be split or to open an issue for alignment first.</p>
+  </div>
+
+  <h2>With Linked Issue</h2>
+  <p style="color:var(--text2);margin-bottom:1rem;font-size:0.9rem;">These huge PRs reference an issue, showing prior alignment.</p>
+  <div id="with-issue"></div>
+
+  <h2>Without Linked Issue</h2>
+  <p style="color:var(--text2);margin-bottom:1rem;font-size:0.9rem;">These have no linked issue — likely to be closed with a request to open an issue first.</p>
+  <div id="without-issue"></div>
+
+  <footer>
+    <a href="../index.html">← Back to overview</a>
+  </footer>
+</div>
+
+<script src="../assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const prs = await fetchData('prs.json');
+
+    const huge = prs.filter(pr => (pr.additions || 0) + (pr.deletions || 0) >= 1000);
+    huge.sort((a, b) => ((b.additions || 0) + (b.deletions || 0)) - ((a.additions || 0) + (a.deletions || 0)));
+
+    const withIssue = huge.filter(pr => (pr.fixes_issues || []).length > 0);
+    const withoutIssue = huge.filter(pr => (pr.fixes_issues || []).length === 0);
+
+    const columns = [
+      { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+      { header: 'Title', className: 'title-cell', render: pr => `<span title="${escapeHtml(pr.title)}">${escapeHtml(pr.title.substring(0, 60))}${pr.title.length > 60 ? '…' : ''}</span>`, sortValue: pr => pr.title },
+      { header: 'Lines', sortType: 'num', render: pr => ((pr.additions||0)+(pr.deletions||0)).toLocaleString(), sortValue: pr => (pr.additions||0)+(pr.deletions||0) },
+      { header: 'Files', sortType: 'num', render: pr => String(pr.changed_files || 0), sortValue: pr => pr.changed_files || 0 },
+      { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
+      { header: 'Age', sortType: 'num', render: pr => timeAgo(pr.created), sortValue: pr => daysAgo(pr.created) },
+    ];
+
+    const columnsWithFixes = [
+      ...columns.slice(0, 2),
+      { header: 'Fixes', render: pr => (pr.fixes_issues || []).map(n => issueLink(n)).join(', ') },
+      ...columns.slice(2),
+    ];
+
+    renderTable('with-issue', withIssue, columnsWithFixes, {
+      emptyMessage: 'No huge PRs with linked issues.',
+      tableId: 'huge-with-table'
+    });
+
+    renderTable('without-issue', withoutIssue, columns, {
+      emptyMessage: 'No huge PRs without linked issues. 🎉',
+      tableId: 'huge-without-table'
+    });
+  } catch (e) {
+    console.error(e);
+    document.getElementById('with-issue').innerHTML = '<div class="empty-state">Failed to load data.</div>';
+  }
+})();
+</script>
+</body>
+</html>

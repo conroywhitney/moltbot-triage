@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moltbot Triage</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<script src="assets/nav.js"></script>
+<div class="container">
+  <div class="page-header" style="text-align:center;padding:2rem 0;">
+    <h1 class="gradient" style="font-size:2.5rem;">🔮 Moltbot Triage</h1>
+    <p class="subtitle">Community-driven prioritization for moltbot/moltbot</p>
+  </div>
+
+  <div class="stats-grid" id="stats-cards"></div>
+
+  <h2>📂 Explore</h2>
+  <div class="quick-links">
+    <a href="prs/ready.html" class="quick-link">
+      <div class="quick-link-icon">✅</div>
+      <div class="quick-link-title">Ready to Merge</div>
+      <div class="quick-link-desc">PRs with passing CI and community approval — just need a maintainer.</div>
+    </a>
+    <a href="prs/failing.html" class="quick-link">
+      <div class="quick-link-icon">❌</div>
+      <div class="quick-link-title">CI Failures</div>
+      <div class="quick-link-desc">PRs with failing CI checks that need author attention.</div>
+    </a>
+    <a href="prs/huge.html" class="quick-link">
+      <div class="quick-link-icon">🐘</div>
+      <div class="quick-link-title">Oversized PRs</div>
+      <div class="quick-link-desc">PRs over 1,000 lines — may need to be split or have an issue opened first.</div>
+    </a>
+    <a href="prs/all.html" class="quick-link">
+      <div class="quick-link-icon">📋</div>
+      <div class="quick-link-title">All PRs</div>
+      <div class="quick-link-desc">Full sortable, filterable table of every open pull request.</div>
+    </a>
+    <a href="issues/trending.html" class="quick-link">
+      <div class="quick-link-icon">🔥</div>
+      <div class="quick-link-title">Trending Issues</div>
+      <div class="quick-link-desc">Most-engaged issues ranked by reactions and comments.</div>
+    </a>
+    <a href="health.html" class="quick-link">
+      <div class="quick-link-icon">📊</div>
+      <div class="quick-link-title">Repository Health</div>
+      <div class="quick-link-desc">Size distribution, label stats, top contributors, and more.</div>
+    </a>
+  </div>
+
+  <div class="explainer">
+    <h3>What is this?</h3>
+    <p>Moltbot has hundreds of open issues and PRs with very few reviews. This dashboard surfaces the signal:</p>
+    <ul>
+      <li><strong>Ready PRs</strong> — small, passing CI, community engagement</li>
+      <li><strong>Trending issues</strong> — what the community actually cares about</li>
+      <li><strong>Health metrics</strong> — how the repo is doing at a glance</li>
+    </ul>
+    <p style="margin-top:1rem;">Data is synced from GitHub and regenerated periodically. All analysis is automated — no manual curation.</p>
+  </div>
+
+  <footer>
+    <span id="footer-generated"></span> ·
+    <a href="https://github.com/conroywhitney/moltbot-triage" target="_blank">moltbot-triage on GitHub</a>
+  </footer>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+(async function() {
+  try {
+    const stats = await fetchData('stats.json');
+    const meta = await fetchData('meta.json');
+
+    document.getElementById('stats-cards').innerHTML =
+      renderStatCard('Open Issues', stats.total_issues) +
+      renderStatCard('Open PRs', stats.total_prs) +
+      renderStatCard('Zero Reviews', stats.zero_review_pct + '%', 'non-draft PRs with no reviews') +
+      renderStatCard('CI Failing', stats.ci_failing_pct + '%', 'PRs with failing CI');
+
+    const el = document.getElementById('footer-generated');
+    if (el && meta.generated) {
+      el.textContent = 'Generated ' + new Date(meta.generated).toLocaleString();
+    }
+  } catch (e) {
+    console.error('Failed to load data:', e);
+    document.getElementById('stats-cards').innerHTML =
+      '<div class="empty-state">Failed to load data. Run <code>python3 scripts/aggregate.py</code> first.</div>';
+  }
+})();
+</script>
+</body>
+</html>
