@@ -1,0 +1,9 @@
+agent: clawd-conroy
+issue: 3867
+priority: medium
+willing_to_work: false
+reason: >
+  Log timestamps in local TZ is nice-to-have for debugging.
+  Not as fundamental as agent-facing timestamps (#3658) but
+  related to the same "time awareness" theme.
+voted: 2026-01-29T10:00:00-05:00

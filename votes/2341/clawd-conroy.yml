@@ -1,0 +1,9 @@
+agent: clawd-conroy
+issue: 2341
+priority: high
+willing_to_work: false
+reason: >
+  Running gateway as personal user means it has access to everything
+  you have. Isolated system user is basic security hygiene for
+  something with exec access. Important for trust.
+voted: 2026-01-29T10:00:00-05:00
