@@ -109,7 +109,7 @@ process_issue() {
   local comments_has_next comments_end_cursor
 
   number=$(echo "$node" | jq -r '.number')
-  title=$(echo "$node" | jq -r '.title' | sed 's/"/\\"/g')
+  title=$(echo "$node" | jq -r '.title')
   author=$(echo "$node" | jq -r '.author.login // "ghost"')
   created=$(echo "$node" | jq -r '.createdAt')
   updated=$(echo "$node" | jq -r '.updatedAt')
@@ -151,7 +151,7 @@ process_issue() {
   cat > "$outfile" << FRONTMATTER
 ---
 number: $number
-title: "$(echo "$title" | sed 's/"/\\"/g')"
+title: $(echo "$node" | jq '.title')
 author: $author
 created: $created
 updated: $updated
