@@ -48,9 +48,9 @@
 
     const columns = [
       { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+      { header: 'CI', render: pr => renderBadge('ci', pr.ci_status), sortValue: pr => pr.ci_status },
       { header: 'Title', className: 'title-cell', render: pr => `<span title="${escapeHtml(pr.title)}">${escapeHtml(pr.title.substring(0, 70))}${pr.title.length > 70 ? '…' : ''}</span>`, sortValue: pr => pr.title },
       { header: 'Size', sortType: 'num', render: pr => renderBadge('size', pr.size), sortValue: pr => (pr.additions || 0) + (pr.deletions || 0) },
-      { header: 'CI', render: pr => renderBadge('ci', pr.ci_status), sortValue: pr => pr.ci_status },
       { header: 'Fixes', render: pr => (pr.fixes_issues || []).map(n => issueLink(n)).join(', ') || '—' },
       { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
       { header: 'Age', sortType: 'num', render: pr => timeAgo(pr.created), sortValue: pr => daysAgo(pr.created) },

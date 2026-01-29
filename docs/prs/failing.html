@@ -39,13 +39,13 @@
 
     const columns = [
       { header: '#', sortType: 'num', render: pr => prLink(pr), sortValue: pr => pr.number },
+      { header: 'CI', render: pr => renderBadge('ci', pr.ci_status), sortValue: pr => pr.ci_status },
       { header: 'Title', className: 'title-cell', render: pr => {
         const fixes = (pr.fixes_issues || []).length;
         const prefix = fixes > 0 ? '🎯 ' : '';
         return `<span title="${escapeHtml(pr.title)}">${prefix}${escapeHtml(pr.title.substring(0, 65))}${pr.title.length > 65 ? '…' : ''}</span>`;
       }, sortValue: pr => pr.title },
       { header: 'Size', sortType: 'num', render: pr => renderBadge('size', pr.size), sortValue: pr => (pr.additions || 0) + (pr.deletions || 0) },
-      { header: 'CI', render: pr => renderBadge('ci', pr.ci_status), sortValue: pr => pr.ci_status },
       { header: 'Author', render: pr => '@' + escapeHtml(pr.author) },
       { header: 'Age', sortType: 'num', render: pr => timeAgo(pr.created), sortValue: pr => daysAgo(pr.created) },
       { header: 'Files', sortType: 'num', render: pr => String(pr.changed_files || 0), sortValue: pr => pr.changed_files || 0 },
