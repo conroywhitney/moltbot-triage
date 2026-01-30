@@ -1,15 +1,15 @@
 {
-  "total_issues": 576,
-  "total_prs": 486,
-  "draft_prs": 3,
-  "zero_review_pct": 88,
-  "ci_failing_pct": 60,
-  "avg_pr_size": 296,
+  "total_issues": 826,
+  "total_prs": 784,
+  "draft_prs": 6,
+  "zero_review_pct": 89,
+  "ci_failing_pct": 61,
+  "avg_pr_size": 380,
   "label_distribution": {
-    "bug": 267,
-    "enhancement": 167,
+    "bug": 314,
+    "enhancement": 198,
+    "question": 5,
     "extensions: memory-core": 4,
-    "question": 3,
     "app: web-ui": 3,
     "pi-issue": 2,
     "channel: discord": 2,
@@ -28,46 +28,66 @@
     "r: third-party-extension": 1
   },
   "pr_label_distribution": {
-    "agents": 144,
-    "docs": 108,
-    "gateway": 67,
-    "commands": 50,
-    "cli": 41,
-    "app: web-ui": 32,
-    "docker": 20,
-    "channel: telegram": 17,
-    "channel: slack": 14,
-    "channel: discord": 13,
-    "channel: whatsapp-web": 12,
-    "app: macos": 12,
-    "scripts": 11,
-    "channel: voice-call": 6,
-    "channel: signal": 5,
-    "app: ios": 4,
-    "channel: googlechat": 4,
-    "extensions: google-gemini-cli-auth": 4,
-    "channel: tlon": 3,
-    "app: android": 3
+    "agents": 239,
+    "docs": 165,
+    "gateway": 103,
+    "commands": 95,
+    "cli": 66,
+    "app: web-ui": 46,
+    "channel: telegram": 37,
+    "docker": 33,
+    "channel: whatsapp-web": 27,
+    "channel: slack": 23,
+    "channel: discord": 18,
+    "scripts": 16,
+    "app: macos": 15,
+    "channel: signal": 10,
+    "channel: voice-call": 7,
+    "channel: googlechat": 6,
+    "channel: imessage": 5,
+    "extensions: memory-lancedb": 5,
+    "channel: nostr": 4,
+    "app: ios": 4
   },
   "size_distribution": {
-    "huge": 15,
-    "large": 134,
-    "medium": 129,
-    "small": 137,
-    "tiny": 71
+    "huge": 53,
+    "large": 192,
+    "medium": 215,
+    "small": 203,
+    "tiny": 121
   },
   "top_contributors": [
+    {
+      "author": "spiceoogway",
+      "count": 36
+    },
+    {
+      "author": "Glucksberg",
+      "count": 16
+    },
+    {
+      "author": "Ayush10",
+      "count": 14
+    },
+    {
+      "author": "HirokiKobayashi-R",
+      "count": 11
+    },
     {
       "author": "hclsys",
       "count": 9
     },
     {
-      "author": "Glucksberg",
+      "author": "ai-fanatic",
       "count": 7
     },
     {
-      "author": "HirokiKobayashi-R",
-      "count": 7
+      "author": "ThanhNguyxn",
+      "count": 6
+    },
+    {
+      "author": "Lukavyi",
+      "count": 6
     },
     {
       "author": "ronit111",
@@ -82,12 +102,16 @@
       "count": 5
     },
     {
-      "author": "Lukavyi",
+      "author": "tmchow",
       "count": 5
     },
     {
-      "author": "ThanhNguyxn",
-      "count": 4
+      "author": "SalimBinYousuf1",
+      "count": 5
+    },
+    {
+      "author": "TechWizard9999",
+      "count": 5
     },
     {
       "author": "spanishflu-est1918",
@@ -110,32 +134,8 @@
       "count": 4
     },
     {
-      "author": "ai-fanatic",
+      "author": "ozgur-polat",
       "count": 4
-    },
-    {
-      "author": "fancyboi999",
-      "count": 3
-    },
-    {
-      "author": "papago2355",
-      "count": 3
-    },
-    {
-      "author": "YuriNachos",
-      "count": 3
-    },
-    {
-      "author": "webdevtodayjason",
-      "count": 3
-    },
-    {
-      "author": "steve-rodri",
-      "count": 3
-    },
-    {
-      "author": "innoiso",
-      "count": 3
     }
   ]
 }

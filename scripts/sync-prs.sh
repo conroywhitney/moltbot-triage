@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# sync-prs.sh — Pull all open PRs from moltbot/moltbot with body, reviews, comments
+# sync-prs.sh — Pull all open PRs from openclaw/openclaw with body, reviews, comments
 set -euo pipefail
 
 REPO_DIR="/Users/conroywhitney/clawdbot"
 STATE_DIR="$(cd "$(dirname "$0")/.." && pwd)/state/prs"
-OWNER="moltbot"
-REPO="moltbot"
+OWNER="openclaw"
+REPO="openclaw"
 PAGE_SIZE=50  # PRs have more data, use smaller pages
 
 mkdir -p "$STATE_DIR"

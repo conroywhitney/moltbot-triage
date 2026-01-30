@@ -1,4 +1,4 @@
-# config.yml — Scoring & filtering settings for moltbot-triage
+# config.yml — Scoring & filtering settings for clawd-triage
 #
 # These values control how issues and PRs are ranked, filtered, and categorized.
 # Want to suggest changes? Open a PR or issue — these are meant to be discussed.
@@ -57,8 +57,8 @@ report_limits:
 
 # GitHub sync settings
 sync:
-  owner: moltbot
-  repo: moltbot
+  owner: openclaw
+  repo: openclaw
   issues_per_page: 100
   prs_per_page: 50          # PRs have more fields, smaller batches
   comments_per_issue: 50    # initial fetch; paginates if more

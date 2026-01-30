@@ -204,8 +204,8 @@ def generate_meta_json(issues_data, prs_data):
     """Generate docs/data/meta.json."""
     log("Generating meta.json...")
     
-    owner = CONFIG.get("sync", {}).get("owner", "moltbot")
-    repo = CONFIG.get("sync", {}).get("repo", "moltbot")
+    owner = CONFIG.get("sync", {}).get("owner", "openclaw")
+    repo = CONFIG.get("sync", {}).get("repo", "openclaw")
     
     meta = {
         "generated": NOW.isoformat().replace("+00:00", "Z"),

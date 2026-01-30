@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# sync-issues.sh — Pull all open issues from moltbot/moltbot with body + comments
+# sync-issues.sh — Pull all open issues from openclaw/openclaw with body + comments
 # Must run gh from the fork directory for auth context
 set -euo pipefail
 
 REPO_DIR="/Users/conroywhitney/clawdbot"
 STATE_DIR="$(cd "$(dirname "$0")/.." && pwd)/state/issues"
-OWNER="moltbot"
-REPO="moltbot"
+OWNER="openclaw"
+REPO="openclaw"
 PAGE_SIZE=100
 COMMENT_LIMIT=50  # max comments per issue in GraphQL (paginate if more)
 
