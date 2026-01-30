@@ -29,7 +29,7 @@ PATTERNS = [
     (r'ghs_[A-Za-z0-9]{36,}', 'ghs_[REDACTED]', 'GitHub App token'),
     (r'ghu_[A-Za-z0-9]{36,}', 'ghu_[REDACTED]', 'GitHub user token'),
     # OpenAI API keys
-    (r'sk-[A-Za-z0-9]{20,}', 'sk-[REDACTED]', 'OpenAI-style API key'),
+    (r'sk-(?:proj-)?[A-Za-z0-9_-]{20,}', 'sk-[REDACTED]', 'OpenAI-style API key'),
     # Google API keys
     (r'AIza[A-Za-z0-9_-]{35,}', 'AIza[REDACTED]', 'Google API key'),
     # AWS access keys
