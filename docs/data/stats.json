@@ -1,23 +1,24 @@
 {
-  "total_issues": 826,
-  "total_prs": 784,
-  "draft_prs": 6,
-  "zero_review_pct": 89,
-  "ci_failing_pct": 61,
-  "avg_pr_size": 380,
+  "total_issues": 1781,
+  "total_prs": 1525,
+  "draft_prs": 16,
+  "zero_review_pct": 35,
+  "ci_failing_pct": 69,
+  "avg_pr_size": 481,
   "label_distribution": {
-    "bug": 314,
-    "enhancement": 198,
+    "bug": 1016,
+    "enhancement": 267,
     "question": 5,
     "extensions: memory-core": 4,
     "app: web-ui": 3,
+    "maintainer": 3,
     "pi-issue": 2,
+    "channel: telegram": 2,
     "channel: discord": 2,
     "gateway": 2,
     "channel: slack": 2,
     "help wanted": 2,
     "cannot-reproduce": 1,
-    "channel: telegram": 1,
     "agents": 1,
     "channel: matrix": 1,
     "cli": 1,
@@ -28,57 +29,93 @@
     "r: third-party-extension": 1
   },
   "pr_label_distribution": {
-    "agents": 239,
-    "docs": 165,
-    "gateway": 103,
-    "commands": 95,
-    "cli": 66,
-    "app: web-ui": 46,
-    "channel: telegram": 37,
-    "docker": 33,
-    "channel: whatsapp-web": 27,
-    "channel: slack": 23,
-    "channel: discord": 18,
-    "scripts": 16,
-    "app: macos": 15,
-    "channel: signal": 10,
-    "channel: voice-call": 7,
-    "channel: googlechat": 6,
-    "channel: imessage": 5,
-    "extensions: memory-lancedb": 5,
-    "channel: nostr": 4,
-    "app: ios": 4
+    "agents": 482,
+    "docs": 295,
+    "gateway": 201,
+    "commands": 147,
+    "cli": 118,
+    "app: web-ui": 107,
+    "channel: telegram": 99,
+    "docker": 65,
+    "channel: whatsapp-web": 48,
+    "channel: slack": 43,
+    "channel: discord": 42,
+    "scripts": 42,
+    "app: macos": 29,
+    "channel: voice-call": 22,
+    "channel: signal": 20,
+    "app: android": 12,
+    "channel: nostr": 10,
+    "channel: imessage": 10,
+    "channel: matrix": 10,
+    "extensions: memory-lancedb": 10
   },
   "size_distribution": {
-    "huge": 53,
-    "large": 192,
-    "medium": 215,
-    "small": 203,
-    "tiny": 121
+    "huge": 104,
+    "large": 334,
+    "medium": 454,
+    "tiny": 251,
+    "small": 382
   },
   "top_contributors": [
+    {
+      "author": "hclsys",
+      "count": 37
+    },
     {
       "author": "spiceoogway",
       "count": 36
     },
     {
       "author": "Glucksberg",
-      "count": 16
+      "count": 34
     },
     {
       "author": "Ayush10",
       "count": 14
     },
     {
+      "author": "lailoo",
+      "count": 14
+    },
+    {
+      "author": "shayan919293",
+      "count": 12
+    },
+    {
       "author": "HirokiKobayashi-R",
       "count": 11
     },
     {
-      "author": "hclsys",
+      "author": "ai-fanatic",
+      "count": 10
+    },
+    {
+      "author": "gavinbmoore",
+      "count": 10
+    },
+    {
+      "author": "David-Marsh-Photo",
       "count": 9
     },
     {
-      "author": "ai-fanatic",
+      "author": "unisone",
+      "count": 8
+    },
+    {
+      "author": "ThinkIbrokeIt",
+      "count": 8
+    },
+    {
+      "author": "zerone0x",
+      "count": 7
+    },
+    {
+      "author": "Lukavyi",
+      "count": 7
+    },
+    {
+      "author": "SalimBinYousuf1",
       "count": 7
     },
     {
@@ -86,7 +123,7 @@
       "count": 6
     },
     {
-      "author": "Lukavyi",
+      "author": "mcinteerj",
       "count": 6
     },
     {
@@ -94,48 +131,12 @@
       "count": 6
     },
     {
-      "author": "zerone0x",
-      "count": 5
+      "author": "1alyx",
+      "count": 6
     },
     {
-      "author": "Episkey-G",
-      "count": 5
-    },
-    {
-      "author": "tmchow",
-      "count": 5
-    },
-    {
-      "author": "SalimBinYousuf1",
-      "count": 5
-    },
-    {
-      "author": "TechWizard9999",
-      "count": 5
-    },
-    {
-      "author": "spanishflu-est1918",
-      "count": 4
-    },
-    {
-      "author": "impozzible",
-      "count": 4
-    },
-    {
-      "author": "Suksham-sharma",
-      "count": 4
-    },
-    {
-      "author": "elliotsecops",
-      "count": 4
-    },
-    {
-      "author": "robbyczgw-cla",
-      "count": 4
-    },
-    {
-      "author": "ozgur-polat",
-      "count": 4
+      "author": "tsukhani",
+      "count": 6
     }
   ]
 }
