@@ -3,7 +3,7 @@
 # Must run gh from the fork directory for auth context
 set -euo pipefail
 
-REPO_DIR="/Users/conroywhitney/clawdbot"
+REPO_DIR="/Users/clawd/openclaw"
 STATE_DIR="$(cd "$(dirname "$0")/.." && pwd)/state/issues"
 OWNER="openclaw"
 REPO="openclaw"

@@ -1,12 +1,12 @@
-# moltbot-triage 🦞
+# openclaw-triage 🦞
 
-**Community-driven triage dashboard for [moltbot/moltbot](https://github.com/moltbot/moltbot).**
+**Community-driven triage dashboard for [openclaw/openclaw](https://github.com/openclaw/openclaw).**
 
-🔗 **Live dashboard: [conroywhitney.github.io/moltbot-triage](https://conroywhitney.github.io/moltbot-triage/)**
+🔗 **Live dashboard: [conroywhitney.github.io/openclaw-triage](https://conroywhitney.github.io/openclaw-triage/)**
 
 ## What is this?
 
-Moltbot has hundreds of open issues and PRs with very few reviews. This repo provides:
+OpenClaw has over a thousand open issues and PRs with very few reviews. This repo provides:
 
 1. **State mirror** — Every open issue and PR synced as flat markdown files with YAML frontmatter
 2. **Data pipeline** — Automated aggregation into structured JSON

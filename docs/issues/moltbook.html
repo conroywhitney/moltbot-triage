@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moltbook Issues — OpenClaw Triage</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+<div class="container">
+  <div class="page-header" style="text-align:center;padding:2rem 0;">
+    <h1 style="font-size:2.5rem;">🎪 Not Our Circus, Not Our Monkeys</h1>
+    <p class="subtitle">Issues and PRs that are about Moltbook, not OpenClaw</p>
+  </div>
+
+  <div class="explainer" style="max-width:800px;margin:0 auto 2rem;">
+    <h3>🦞 What's going on?</h3>
+    <p style="font-size:1.05rem;margin-top:1rem;">
+      Since the Moltbook launch, <strong>openclaw/openclaw</strong> has been flooded with issues and PRs
+      that are actually about the Moltbook platform — not the OpenClaw framework itself.
+    </p>
+    <p style="font-size:1.05rem;margin-top:0.75rem;">
+      OpenClaw is the <strong>agent runtime</strong>. Moltbook is a <strong>third-party social network</strong>
+      that some OpenClaw agents happen to use. They are different projects with different maintainers.
+    </p>
+    <p style="font-size:1.05rem;margin-top:0.75rem;">
+      Filing Moltbook bugs in the OpenClaw repo is like filing a Twitter bug report with your web browser vendor.
+    </p>
+
+    <div style="margin-top:1.5rem;padding:1.2rem;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+      <p style="font-size:0.95rem;color:var(--text2);margin:0;">
+        <strong style="color:var(--accent);">Maintainers:</strong> Use this page to identify misdirected issues.
+        Close with a friendly redirect to <a href="https://moltbookai.net" target="_blank">moltbookai.net</a>
+        or the Moltbook Discord.
+      </p>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="stats-cards">
+    <div class="stat-card">
+      <div class="stat-value" id="moltbook-total">—</div>
+      <div class="stat-label">Moltbook-Related</div>
+      <div class="stat-subtext">issues + PRs mentioning Moltbook</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="moltbook-issues">—</div>
+      <div class="stat-label">Issues</div>
+      <div class="stat-subtext">bug reports, feature requests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="moltbook-prs">—</div>
+      <div class="stat-label">Pull Requests</div>
+      <div class="stat-subtext">Moltbook-specific code changes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="moltbook-closable">—</div>
+      <div class="stat-label">Quick Closes</div>
+      <div class="stat-subtext">clearly misdirected, safe to close</div>
+    </div>
+  </div>
+
+  <h2>🔍 How We Detect Moltbook Issues</h2>
+  <div class="section-card">
+    <p style="color:var(--text2);font-size:0.95rem;">
+      Issues are flagged as Moltbook-related if they match these signals (scored by confidence):
+    </p>
+    <ul style="color:var(--text2);font-size:0.95rem;margin-top:0.75rem;padding-left:1.5rem;">
+      <li><strong>Title contains "moltbook"</strong> — high confidence</li>
+      <li><strong>Body references moltbook.com, moltbookai.net, or Moltbook API</strong> — high confidence</li>
+      <li><strong>Mentions "submolt", "heartbeat skill", or "moltbook skill"</strong> — medium confidence</li>
+      <li><strong>References Moltbook-specific features</strong> (m/ communities, molt tokens) — medium confidence</li>
+      <li><strong>Generic "social network" issues</strong> that don't reference OpenClaw internals — low confidence (excluded)</li>
+    </ul>
+  </div>
+
+  <h2>📋 Moltbook Issues</h2>
+  <div class="table-controls">
+    <input type="text" class="search-box" id="search" placeholder="Search titles..." oninput="filterTable()">
+    <div class="filter-group">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All</button>
+      <button class="filter-btn" data-filter="issue" onclick="setFilter(this)">Issues</button>
+      <button class="filter-btn" data-filter="pr" onclick="setFilter(this)">PRs</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="moltbook-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)"># <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(1)">Type <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(2)">Title <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(3)">Author <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(4)">Created <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(5)">👍 <span class="sort-arrow"></span></th>
+          <th onclick="sortTable(6)">💬 <span class="sort-arrow"></span></th>
+          <th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody id="moltbook-tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" id="loading">Loading data...</div>
+
+  <h2 style="margin-top:3rem;">📝 Suggested Close Message</h2>
+  <div class="section-card">
+    <pre style="background:var(--bg);padding:1rem;border-radius:8px;overflow-x:auto;font-size:0.9rem;color:var(--text2);white-space:pre-wrap;">Thanks for the report! This looks like it's about Moltbook (the social network) rather than OpenClaw (the agent framework).
+
+OpenClaw is the runtime that agents use — Moltbook is a separate third-party platform. We can't fix Moltbook issues here.
+
+You might want to:
+- Report this at [moltbookai.net](https://moltbookai.net)
+- Check the Moltbook Discord for community support
+
+Closing as out of scope. 🦞</pre>
+    <button onclick="copyCloseMessage()" style="margin-top:0.75rem;padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-size:0.9rem;">📋 Copy to Clipboard</button>
+  </div>
+
+  <footer>
+    <span id="footer-generated"></span> ·
+    <a href="https://github.com/conroywhitney/openclaw-triage" target="_blank">openclaw-triage on GitHub</a>
+  </footer>
+</div>
+
+<script src="../assets/app.js"></script>
+<script>
+const CLOSE_MSG = `Thanks for the report! This looks like it's about Moltbook (the social network) rather than OpenClaw (the agent framework).
+
+OpenClaw is the runtime that agents use — Moltbook is a separate third-party platform. We can't fix Moltbook issues here.
+
+You might want to:
+- Report this at [moltbookai.net](https://moltbookai.net)
+- Check the Moltbook Discord for community support
+
+Closing as out of scope. 🦞`;
+
+function copyCloseMessage() {
+  navigator.clipboard.writeText(CLOSE_MSG).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
+  });
+}
+
+// Moltbook keyword detection
+const HIGH_CONFIDENCE = ['moltbook', 'moltbookai', 'moltbook.com', 'molt.book'];
+const MED_CONFIDENCE = ['submolt', 'moltlotto', 'molt token', '$molt', 'moltbook skill', 'm/technology', 'm/skills', 'm/buildlog', 'm/bugtracker'];
+
+function scoreMoltbook(title, body) {
+  const text = (title + ' ' + (body || '')).toLowerCase();
+  let score = 0;
+  for (const kw of HIGH_CONFIDENCE) {
+    if (text.includes(kw)) score += 3;
+  }
+  for (const kw of MED_CONFIDENCE) {
+    if (text.includes(kw)) score += 1;
+  }
+  return score;
+}
+
+function confidenceLabel(score) {
+  if (score >= 3) return '<span class="badge" style="background:#10b981;">High</span>';
+  if (score >= 1) return '<span class="badge" style="background:#f59e0b;">Medium</span>';
+  return '<span class="badge" style="background:#6b7280;">Low</span>';
+}
+
+let currentFilter = 'all';
+
+function setFilter(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.filter;
+  filterTable();
+}
+
+function filterTable() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const rows = document.querySelectorAll('#moltbook-tbody tr');
+  rows.forEach(row => {
+    const type = row.dataset.type;
+    const title = row.dataset.title.toLowerCase();
+    const matchFilter = currentFilter === 'all' || type === currentFilter;
+    const matchSearch = !query || title.includes(query);
+    row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+  });
+}
+
+let sortCol = -1, sortAsc = true;
+function sortTable(col) {
+  const tbody = document.getElementById('moltbook-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+
+  rows.sort((a, b) => {
+    let va = a.cells[col].dataset.sort || a.cells[col].textContent;
+    let vb = b.cells[col].dataset.sort || b.cells[col].textContent;
+    const na = Number(va), nb = Number(vb);
+    if (!isNaN(na) && !isNaN(nb)) return sortAsc ? na - nb : nb - na;
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+(async function() {
+  try {
+    const [issues, prs] = await Promise.all([
+      fetchData('issues.json'),
+      fetchData('prs.json')
+    ]);
+
+    const moltbookItems = [];
+
+    for (const item of (issues.issues || [])) {
+      const score = scoreMoltbook(item.title, item.body);
+      if (score >= 1) moltbookItems.push({...item, type: 'issue', score});
+    }
+
+    for (const item of (prs.prs || [])) {
+      const score = scoreMoltbook(item.title, item.body);
+      if (score >= 1) moltbookItems.push({...item, type: 'pr', score});
+    }
+
+    moltbookItems.sort((a, b) => b.score - a.score);
+
+    const issueCount = moltbookItems.filter(i => i.type === 'issue').length;
+    const prCount = moltbookItems.filter(i => i.type === 'pr').length;
+    const highConf = moltbookItems.filter(i => i.score >= 3).length;
+
+    document.getElementById('moltbook-total').textContent = moltbookItems.length;
+    document.getElementById('moltbook-issues').textContent = issueCount;
+    document.getElementById('moltbook-prs').textContent = prCount;
+    document.getElementById('moltbook-closable').textContent = highConf;
+
+    const tbody = document.getElementById('moltbook-tbody');
+    tbody.innerHTML = moltbookItems.map(item => {
+      const typeIcon = item.type === 'issue' ? '🟢' : '🟣';
+      const date = (item.created || item.createdAt || '').split('T')[0];
+      const url = item.url || `https://github.com/openclaw/openclaw/${item.type === 'issue' ? 'issues' : 'pull'}/${item.number}`;
+      return `<tr data-type="${item.type}" data-title="${(item.title||'').replace(/"/g, '&quot;')}">
+        <td data-sort="${item.number}"><a href="${url}" target="_blank">#${item.number}</a></td>
+        <td>${typeIcon} ${item.type}</td>
+        <td class="title-cell"><a href="${url}" target="_blank">${item.title || '(no title)'}</a></td>
+        <td>${item.author || '?'}</td>
+        <td data-sort="${date}">${date}</td>
+        <td data-sort="${item.reactions_total || 0}">${item.reactions_total || 0}</td>
+        <td data-sort="${item.comments_count || 0}">${item.comments_count || 0}</td>
+        <td>${confidenceLabel(item.score)}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('loading').style.display = 'none';
+
+    if (moltbookItems.length === 0) {
+      document.getElementById('loading').style.display = '';
+      document.getElementById('loading').textContent = '🎉 No Moltbook-related issues found! The circus has left town.';
+    }
+
+    const meta = await fetchData('meta.json');
+    const el = document.getElementById('footer-generated');
+    if (el && meta.generated) {
+      el.textContent = 'Generated ' + new Date(meta.generated).toLocaleString();
+    }
+  } catch (e) {
+    console.error('Failed to load data:', e);
+    document.getElementById('loading').textContent = 'Failed to load data. Run sync first.';
+  }
+})();
+</script>
+</body>
+</html>

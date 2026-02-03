@@ -7,6 +7,7 @@
     { href: '/prs/huge.html', label: 'Huge PRs', match: /\/prs\/huge\.html$/ },
     { href: '/prs/all.html', label: 'All PRs', match: /\/prs\/all\.html$/ },
     { href: '/issues/trending.html', label: 'Trending', match: /\/issues\/trending\.html$/ },
+    { href: '/issues/moltbook.html', label: '🎪 Moltbook', match: /\/issues\/moltbook\.html$/ },
     { href: '/health.html', label: 'Health', match: /\/health\.html$/ },
   ];
 
@@ -32,7 +33,7 @@
 
     nav.innerHTML = `
       <div class="nav-inner">
-        <a href="${base}/index.html" class="nav-brand">🔮 Moltbot Triage</a>
+        <a href="${base}/index.html" class="nav-brand">🔮 OpenClaw Triage</a>
         ${linksHTML}
         <span class="nav-meta" id="nav-generated"></span>
       </div>`;

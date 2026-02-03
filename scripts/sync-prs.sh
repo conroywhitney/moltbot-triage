@@ -2,7 +2,7 @@
 # sync-prs.sh — Pull all open PRs from openclaw/openclaw with body, reviews, comments
 set -euo pipefail
 
-REPO_DIR="/Users/conroywhitney/clawdbot"
+REPO_DIR="/Users/clawd/openclaw"
 STATE_DIR="$(cd "$(dirname "$0")/.." && pwd)/state/prs"
 OWNER="openclaw"
 REPO="openclaw"
@@ -15,7 +15,7 @@ log() { echo "[sync-prs] $*" >&2; }
 # GraphQL query — no $cursor variable for first page, handled in loop
 QUERY_FIRST='
 {
-  repository(owner: "moltbot", name: "moltbot") {
+  repository(owner: "openclaw", name: "openclaw") {
     pullRequests(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
       totalCount
       nodes {
@@ -71,7 +71,7 @@ QUERY_FIRST='
 
 QUERY_PAGED='
 query($cursor: String!) {
-  repository(owner: "moltbot", name: "moltbot") {
+  repository(owner: "openclaw", name: "openclaw") {
     pullRequests(first: 50, states: OPEN, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {
       totalCount
       nodes {
